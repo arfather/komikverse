@@ -273,7 +273,7 @@ export const useStore = create<AppState>()(
       fetchHomepageComics: async () => {
         set({ isLoadingHomepage: true, homepageError: null });
         try {
-          const res = await fetch("/api-proxy/v1/manga/list?type=project&page=1&page_size=24&is_update=true&sort=latest&sort_order=desc");
+          const res = await fetch("https://api.shngm.io/v1/manga/list?type=project&page=1&page_size=24&is_update=true&sort=latest&sort_order=desc");
           if (!res.ok) {
             throw new Error(`Failed to fetch homepage comics: ${res.statusText}`);
           }
@@ -307,7 +307,7 @@ export const useStore = create<AppState>()(
         }
         set({ isLoadingSearch: true, searchError: null });
         try {
-          const res = await fetch(`/api-proxy/v1/manga/list?page=1&page_size=24&q=${encodeURIComponent(query)}`);
+          const res = await fetch(`https://api.shngm.io/v1/manga/list?page=1&page_size=24&q=${encodeURIComponent(query)}`);
           if (!res.ok) {
             throw new Error(`Search failed: ${res.statusText}`);
           }

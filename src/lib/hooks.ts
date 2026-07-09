@@ -239,7 +239,7 @@ export function useChapterPages(comic: Comic, chapter: number) {
         setError(null);
       });
 
-      const urlTemplate = comic.api?.chapterDetail?.urls?.url || "/api-proxy/v1/chapter/detail/{id_chapter}";
+      const urlTemplate = comic.api?.chapterDetail?.urls?.url || "https://api.shngm.io/v1/chapter/detail/{id_chapter}";
       const fetchUrl = urlTemplate.replace("{id_chapter}", chapterId);
 
       fetch(fetchUrl)

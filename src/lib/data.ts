@@ -103,14 +103,14 @@ export const comics: Comic[] = [
       detail: {
         id: "4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
         urls: {
-          url: "/api-proxy/v1/manga/detail/4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
+          url: "https://api.shngm.io/v1/manga/detail/4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
           params: null
         }
       },
       chapters: {
         id: "4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
         urls: {
-          url: "/api-proxy/v1/chapter/{id}/list",
+          url: "https://api.shngm.io/v1/chapter/{id}/list",
           params: {
             page: 1,
             page_size: 24,
@@ -121,7 +121,7 @@ export const comics: Comic[] = [
       },
       chapterDetail: {
         urls: {
-          url: "/api-proxy/v1/chapter/detail/{id_chapter}",
+          url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
           params: null
         }
       }
@@ -161,14 +161,14 @@ export const comics: Comic[] = [
       detail: {
         id: "d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
         urls: {
-          url: "/api-proxy/v1/manga/detail/d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
+          url: "https://api.shngm.io/v1/manga/detail/d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
           params: null
         }
       },
       chapters: {
         id: "d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
         urls: {
-          url: "/api-proxy/v1/chapter/{id}/list",
+          url: "https://api.shngm.io/v1/chapter/{id}/list",
           params: {
             page: 1,
             page_size: 24,
@@ -179,7 +179,7 @@ export const comics: Comic[] = [
       },
       chapterDetail: {
         urls: {
-          url: "/api-proxy/v1/chapter/detail/{id_chapter}",
+          url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
           params: null
         }
       }
@@ -493,14 +493,14 @@ export function mapApiMangaListToComics(dataList: ApiMangaListItem[]): Comic[] {
       detail: {
         id: item.manga_id,
         urls: {
-          url: `/api-proxy/v1/manga/detail/${item.manga_id}`,
+          url: `https://api.shngm.io/v1/manga/detail/${item.manga_id}`,
           params: null
         }
       },
       chapters: {
         id: item.manga_id,
         urls: {
-          url: `/api-proxy/v1/chapter/${item.manga_id}/list`,
+          url: `https://api.shngm.io/v1/chapter/${item.manga_id}/list`,
           params: {
             page: 1,
             page_size: 200,
@@ -511,7 +511,7 @@ export function mapApiMangaListToComics(dataList: ApiMangaListItem[]): Comic[] {
       },
       chapterDetail: {
         urls: {
-          url: "/api-proxy/v1/chapter/detail/{id_chapter}",
+          url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
           params: null
         }
       }
