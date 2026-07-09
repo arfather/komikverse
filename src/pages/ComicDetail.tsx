@@ -37,10 +37,13 @@ export default function ComicDetail() {
   const loadedComics = useStore((s) => s.loadedComics);
   const fetchComic = useStore((s) => s.fetchComic);
   const isLoading = useStore((s) => s.isLoadingComic);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   useEffect(() => {
     if (validSlug) {
-      fetchComic(validSlug);
+      fetchComic(validSlug).then(() => {
+        setHasAttemptedFetch(true);
+      });
     }
   }, [validSlug, fetchComic]);
 
@@ -59,6 +62,17 @@ export default function ComicDetail() {
   }
 
   if (!comic) {
+    if (isLoading || !hasAttemptedFetch) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-void">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-fire border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-text-muted">Memuat data komik...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-void">
         <div className="text-center">
