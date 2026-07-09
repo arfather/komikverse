@@ -94,122 +94,122 @@ export const VALID_STATUSES = ["Ongoing", "Completed", "Hiatus"] as const;
 
 
 export const comics: Comic[] = [
-  {
-    id: "star-embracing-swordmaster",
-    slug: "star-embracing-swordmaster",
-    title: "Star Embracing Swordmaster",
-    altTitle: "Star Embracing Swordmaster",
-    api: {
-      detail: {
-        id: "4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
-        urls: {
-          url: "https://api.shngm.io/v1/manga/detail/4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
-          params: null
-        }
-      },
-      chapters: {
-        id: "4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
-        urls: {
-          url: "https://api.shngm.io/v1/chapter/{id}/list",
-          params: {
-            page: 1,
-            page_size: 24,
-            sort_by: "chapter_number",
-            sort_order: "desc",
-          }
-        }
-      },
-      chapterDetail: {
-        urls: {
-          url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
-          params: null
-        }
-      }
-    },
-    type: "Manhwa",
-    status: "Ongoing",
-    author: "Hong Dae-Wui",
-    artist: "Juno",
-    genres: ["Action", "Advanture", "Fantasy"],
-    rating: 8.5,
-    totalVotes: 18420,
-    views: "24.8M",
-    bookmarks: 1,
-    synopsis:
-      "Setelah 10 tahun berjuang di menara yang misterius, Sung Min adalah satu-satunya yang berhasil mencapai puncak. Namun, bukan akhir yang menantinya melainkan kesempatan kedua. Diputar kembali ke 10 tahun yang lalu dengan pengetahuan dan kekuatan yang dimilikinya, ia berjanji akan mengubah takdirnya dan melindungi orang-orang yang dicintainya.",
-    coverUrl: "/images/covers/solo-ascending.jpg",
-    bannerUrl: "/images/banners/solo-ascending-wide.jpg",
-    latestChapter: 187,
-    totalChapters: 187,
-    updatedAt: "2024-01-15",
-    isNew: false,
-    isFeatured: true,
-    chapters: [
-      { number: 187, title: "Kebangkitan Sang Penguasa", date: "2024-01-15", views: "1.2M" },
-      { number: 186, title: "Pertarungan di Puncak", date: "2024-01-08", views: "1.5M" },
-      { number: 185, title: "Kekuatan Tersembunyi", date: "2024-01-01", views: "1.3M" },
-      { number: 184, title: "Aliansi Para Pembunuh", date: "2023-12-25", views: "1.1M" },
-      { number: 183, title: "Jalan Menuju Puncak", date: "2023-12-18", views: "980K" },
-    ],
-  },
-   {
-    id: "nano-machine",
-    slug: "nano-machine",
-    title: "Nano Machine",
-    altTitle: "Nano Machine",
-    api: {
-      detail: {
-        id: "d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
-        urls: {
-          url: "https://api.shngm.io/v1/manga/detail/d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
-          params: null
-        }
-      },
-      chapters: {
-        id: "d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
-        urls: {
-          url: "https://api.shngm.io/v1/chapter/{id}/list",
-          params: {
-            page: 1,
-            page_size: 24,
-            sort_by: "chapter_number",
-            sort_order: "desc",
-          }
-        }
-      },
-      chapterDetail: {
-        urls: {
-          url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
-          params: null
-        }
-      }
-    },
-    type: "Manhwa",
-    status: "Ongoing",
-    author: "Hong Dae-Wui",
-    artist: "Juno",
-    genres: ["Action", "Advanture", "Fantasy"],
-    rating: 8.5,
-    totalVotes: 18420,
-    views: "24.8M",
-    bookmarks: 1,
-    synopsis:
-      "Setelah 10 tahun berjuang di menara yang misterius, Sung Min adalah satu-satunya yang berhasil mencapai puncak. Namun, bukan akhir yang menantinya melainkan kesempatan kedua. Diputar kembali ke 10 tahun yang lalu dengan pengetahuan dan kekuatan yang dimilikinya, ia berjanji akan mengubah takdirnya dan melindungi orang-orang yang dicintainya.",
-    coverUrl: "/images/covers/solo-ascending.jpg",
-    bannerUrl: "/images/banners/solo-ascending-wide.jpg",
-    latestChapter: 187,
-    totalChapters: 187,
-    updatedAt: "2024-01-15",
-    isNew: false,
-    isFeatured: true,
-    chapters: [
-      { number: 187, title: "Kebangkitan Sang Penguasa", date: "2024-01-15", views: "1.2M" },
-      { number: 186, title: "Pertarungan di Puncak", date: "2024-01-08", views: "1.5M" },
-      { number: 185, title: "Kekuatan Tersembunyi", date: "2024-01-01", views: "1.3M" },
-      { number: 184, title: "Aliansi Para Pembunuh", date: "2023-12-25", views: "1.1M" },
-      { number: 183, title: "Jalan Menuju Puncak", date: "2023-12-18", views: "980K" },
-    ],
-  },
+  // {
+  //   id: "star-embracing-swordmaster",
+  //   slug: "star-embracing-swordmaster",
+  //   title: "Star Embracing Swordmaster",
+  //   altTitle: "Star Embracing Swordmaster",
+  //   api: {
+  //     detail: {
+  //       id: "4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
+  //       urls: {
+  //         url: "https://api.shngm.io/v1/manga/detail/4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
+  //         params: null
+  //       }
+  //     },
+  //     chapters: {
+  //       id: "4bf6c017-842e-48a1-8a2a-f6160c1d8d44",
+  //       urls: {
+  //         url: "https://api.shngm.io/v1/chapter/{id}/list",
+  //         params: {
+  //           page: 1,
+  //           page_size: 24,
+  //           sort_by: "chapter_number",
+  //           sort_order: "desc",
+  //         }
+  //       }
+  //     },
+  //     chapterDetail: {
+  //       urls: {
+  //         url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
+  //         params: null
+  //       }
+  //     }
+  //   },
+  //   type: "Manhwa",
+  //   status: "Ongoing",
+  //   author: "Hong Dae-Wui",
+  //   artist: "Juno",
+  //   genres: ["Action", "Advanture", "Fantasy"],
+  //   rating: 8.5,
+  //   totalVotes: 18420,
+  //   views: "24.8M",
+  //   bookmarks: 1,
+  //   synopsis:
+  //     "Setelah 10 tahun berjuang di menara yang misterius, Sung Min adalah satu-satunya yang berhasil mencapai puncak. Namun, bukan akhir yang menantinya melainkan kesempatan kedua. Diputar kembali ke 10 tahun yang lalu dengan pengetahuan dan kekuatan yang dimilikinya, ia berjanji akan mengubah takdirnya dan melindungi orang-orang yang dicintainya.",
+  //   coverUrl: "/images/covers/solo-ascending.jpg",
+  //   bannerUrl: "/images/banners/solo-ascending-wide.jpg",
+  //   latestChapter: 187,
+  //   totalChapters: 187,
+  //   updatedAt: "2024-01-15",
+  //   isNew: false,
+  //   isFeatured: true,
+  //   chapters: [
+  //     { number: 187, title: "Kebangkitan Sang Penguasa", date: "2024-01-15", views: "1.2M" },
+  //     { number: 186, title: "Pertarungan di Puncak", date: "2024-01-08", views: "1.5M" },
+  //     { number: 185, title: "Kekuatan Tersembunyi", date: "2024-01-01", views: "1.3M" },
+  //     { number: 184, title: "Aliansi Para Pembunuh", date: "2023-12-25", views: "1.1M" },
+  //     { number: 183, title: "Jalan Menuju Puncak", date: "2023-12-18", views: "980K" },
+  //   ],
+  // },
+  //  {
+  //   id: "nano-machine",
+  //   slug: "nano-machine",
+  //   title: "Nano Machine",
+  //   altTitle: "Nano Machine",
+  //   api: {
+  //     detail: {
+  //       id: "d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
+  //       urls: {
+  //         url: "https://api.shngm.io/v1/manga/detail/d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
+  //         params: null
+  //       }
+  //     },
+  //     chapters: {
+  //       id: "d3b05787-4c8e-42bb-ba9a-6b2fafd92f3c",
+  //       urls: {
+  //         url: "https://api.shngm.io/v1/chapter/{id}/list",
+  //         params: {
+  //           page: 1,
+  //           page_size: 24,
+  //           sort_by: "chapter_number",
+  //           sort_order: "desc",
+  //         }
+  //       }
+  //     },
+  //     chapterDetail: {
+  //       urls: {
+  //         url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
+  //         params: null
+  //       }
+  //     }
+  //   },
+  //   type: "Manhwa",
+  //   status: "Ongoing",
+  //   author: "Hong Dae-Wui",
+  //   artist: "Juno",
+  //   genres: ["Action", "Advanture", "Fantasy"],
+  //   rating: 8.5,
+  //   totalVotes: 18420,
+  //   views: "24.8M",
+  //   bookmarks: 1,
+  //   synopsis:
+  //     "Setelah 10 tahun berjuang di menara yang misterius, Sung Min adalah satu-satunya yang berhasil mencapai puncak. Namun, bukan akhir yang menantinya melainkan kesempatan kedua. Diputar kembali ke 10 tahun yang lalu dengan pengetahuan dan kekuatan yang dimilikinya, ia berjanji akan mengubah takdirnya dan melindungi orang-orang yang dicintainya.",
+  //   coverUrl: "/images/covers/solo-ascending.jpg",
+  //   bannerUrl: "/images/banners/solo-ascending-wide.jpg",
+  //   latestChapter: 187,
+  //   totalChapters: 187,
+  //   updatedAt: "2024-01-15",
+  //   isNew: false,
+  //   isFeatured: true,
+  //   chapters: [
+  //     { number: 187, title: "Kebangkitan Sang Penguasa", date: "2024-01-15", views: "1.2M" },
+  //     { number: 186, title: "Pertarungan di Puncak", date: "2024-01-08", views: "1.5M" },
+  //     { number: 185, title: "Kekuatan Tersembunyi", date: "2024-01-01", views: "1.3M" },
+  //     { number: 184, title: "Aliansi Para Pembunuh", date: "2023-12-25", views: "1.1M" },
+  //     { number: 183, title: "Jalan Menuju Puncak", date: "2023-12-18", views: "980K" },
+  //   ],
+  // },
 ];
 
 export function getComicBySlug(slug: string): Comic | undefined {

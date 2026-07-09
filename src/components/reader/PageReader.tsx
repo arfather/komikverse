@@ -114,7 +114,7 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
         <div className="absolute right-0 top-0 bottom-0 w-1/4 bg-gradient-to-l from-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
 
         {/* Page image */}
-        <div className="relative max-w-2xl w-full mx-4 watermark-overlay">
+        <div className="relative max-w-2xl w-full px-4 md:px-0 mx-auto watermark-overlay">
           {!isLoaded && <div className="w-full aspect-[2/3] shimmer rounded-lg" />}
           <img
             src={pages[currentPage]}

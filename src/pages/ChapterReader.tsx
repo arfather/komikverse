@@ -93,7 +93,7 @@ export default function ChapterReader() {
 
   return (
     <div
-      className={`min-h-screen ${bgClasses[readerSettings.bgColor]} relative`}
+      className={`min-h-screen ${bgClasses[readerSettings.bgColor]} relative overflow-x-hidden`}
     >
       {/* Brightness overlay */}
       {readerSettings.brightness > 0 && (
