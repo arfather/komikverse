@@ -1,5 +1,6 @@
 import HeroBanner from "@/components/hero/HeroBanner";
 import ComicCard from "@/components/ui/ComicCard";
+import SkeletonCard from "@/components/ui/SkeletonCard";
 import { VALID_GENRES } from "@/lib/data";
 import { ChevronLeft, ChevronRight, Clock, TrendingUp } from "lucide-react";
 import { useCallback, useRef, useState, useEffect, useMemo } from "react";
@@ -41,6 +42,46 @@ export default function Home() {
       });
     }
   }, []);
+
+  if (isLoading && homepageComics.length === 0) {
+    return (
+      <div className="min-h-screen bg-void pt-20 pb-10">
+        {/* Hero Banner Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 mb-8 animate-pulse">
+          <div className="w-full h-[350px] md:h-[450px] shimmer rounded-2xl" />
+        </div>
+
+        {/* Genre Filter Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 mb-8">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-9 w-20 shimmer rounded-full flex-shrink-0 animate-pulse" />
+            ))}
+          </div>
+        </div>
+
+        {/* Terbaru Diupdate Skeleton */}
+        <section className="max-w-7xl mx-auto px-4 mt-10">
+          <div className="h-8 w-60 shimmer rounded-lg mb-6 animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonCard key={i} variant="grid" />
+            ))}
+          </div>
+        </section>
+
+        {/* Populer Skeleton */}
+        <section className="max-w-7xl mx-auto px-4 mt-14">
+          <div className="h-8 w-60 shimmer rounded-lg mb-6 animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} variant="grid" />
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-void relative">
@@ -90,7 +131,7 @@ export default function Home() {
           </h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {filteredByGenre.slice(0, 12).map((comic, i) => (
+          {filteredByGenre.slice(0, 24).map((comic, i) => (
             <ComicCard key={comic.id} comic={comic} index={i} />
           ))}
         </div>
