@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_TARGET || "https://api.shngm.io";
 
   return {
-    base: './',
+    base: '/',
     plugins: [inspectAttr(), react()],
     server: {
       port: 3000,
