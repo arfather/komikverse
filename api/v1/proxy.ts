@@ -18,18 +18,28 @@ async function encryptResponse(plaintext: string): Promise<string> {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const urlObj = new URL(req.url || "", `http://${req.headers.host || "localhost"}`);
-    const pathname = urlObj.pathname;
+    
+    // Extract target path from __path query parameter or fallback to pathname
+    const targetPath = urlObj.searchParams.get("__path") || urlObj.pathname.replace(/^\/api\/v1\//, "");
+    
+    // Clean up the temporary query parameter so it is not forwarded to the destination API
+    urlObj.searchParams.delete("__path");
     const search = urlObj.search;
     
-    const targetPath = pathname.replace(/^\/api\/v1\//, "");
     const targetUrl = `${apiTarget}/v1/${targetPath}${search}`;
     
-    const response = await fetch(targetUrl, {
+    const fetchOptions: RequestInit = {
       method: req.method,
       headers: {
         "Content-Type": "application/json",
       },
-    });
+    };
+    
+    if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
+      fetchOptions.body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    }
+    
+    const response = await fetch(targetUrl, fetchOptions);
     
     if (!response.ok) {
       return res.status(response.status).json({ error: response.statusText });
