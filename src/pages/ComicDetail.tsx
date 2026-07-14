@@ -30,6 +30,7 @@ export default function ComicDetail() {
   const [visibleChapters, setVisibleChapters] = useState(20);
   const toggleBookmark = useStore((s) => s.toggleBookmark);
   const isBookmarked = useStore((s) => s.isBookmarked(slug || ""));
+  const isChapterRead = useStore((s) => s.isChapterRead);
 
   // Security: validate slug
   const validSlug = useMemo(() => sanitizeSlug(slug), [slug]);
@@ -61,18 +62,18 @@ export default function ComicDetail() {
     return <Navigate to="/404" replace />;
   }
 
-  if (!comic) {
-    if (isLoading || !hasAttemptedFetch) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-void">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-fire border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-text-muted">Memuat data komik...</p>
-          </div>
+  if (!hasAttemptedFetch || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-void">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-fire border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-muted">Memuat data komik...</p>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
+  if (!comic) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-void">
         <div className="text-center">
@@ -140,7 +141,7 @@ export default function ComicDetail() {
         </div>
       )}
       {/* Hero Detail */}
-      <div className="relative h-[70vh] min-h-[500px] overflow-hidden">
+      <div className="relative h-auto md:h-[60vh] lg:h-[70vh] md:min-h-[450px] lg:min-h-[500px] py-8 md:py-0 overflow-hidden flex items-stretch md:items-end">
         {/* Background */}
         <div className="absolute inset-0">
           <img
@@ -152,13 +153,13 @@ export default function ComicDetail() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex items-end pb-10">
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 flex items-start md:items-end pb-0 md:pb-10 pt-16 md:pt-0">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start text-center md:text-left w-full">
             {/* Cover */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-40 md:w-52 flex-shrink-0 rounded-xl overflow-hidden shadow-2xl shadow-black/50"
+              className="w-40 md:w-52 flex-shrink-0 rounded-xl overflow-hidden shadow-2xl shadow-black/50 mx-auto md:mx-0"
             >
               <img
                 src={comic.coverUrl}
@@ -172,16 +173,16 @@ export default function ComicDetail() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="flex-1"
+              className="flex-1 w-full"
             >
               {/* Title */}
-              <h1 className="font-display text-4xl md:text-6xl text-warm-white tracking-wide uppercase">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-6xl text-warm-white tracking-wide uppercase leading-tight">
                 {comic.title}
               </h1>
-              <p className="text-text-muted text-lg mt-1">{comic.altTitle}</p>
+              <p className="text-text-muted text-sm sm:text-base md:text-lg mt-1">{comic.altTitle}</p>
 
               {/* Meta */}
-              <div className="flex flex-wrap items-center gap-4 mt-3">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3">
                 <span className="text-sm text-text-muted">
                   {comic.author}
                 </span>
@@ -203,7 +204,7 @@ export default function ComicDetail() {
               </div>
 
               {/* Rating */}
-              <div className="flex items-center gap-3 mt-4">
+              <div className="flex items-center justify-center md:justify-start gap-3 mt-4">
                 <StarRating
                   rating={Math.round(comic.rating) / 2}
                   size="lg"
@@ -218,7 +219,7 @@ export default function ComicDetail() {
               </div>
 
               {/* Genres */}
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
                 {comic.genres.map((genre) => (
                   <Link
                     key={genre}
@@ -231,22 +232,22 @@ export default function ComicDetail() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-3 mt-6 w-full">
                 <Link
                   to={`/comic/${comic.slug}/${firstChapter}`}
-                  className="px-6 py-3 bg-fire hover:bg-fire-glow text-white font-bold rounded-lg transition-colors shadow-bloom"
+                  className="px-6 py-3 bg-fire hover:bg-fire-glow text-white font-bold rounded-lg transition-colors shadow-bloom text-center flex-1 sm:flex-none"
                 >
                   Baca Chapter 1
                 </Link>
                 <Link
                   to={`/comic/${comic.slug}/${latestChapter}`}
-                  className="px-6 py-3 bg-raised hover:bg-fire/20 text-warm-white font-bold rounded-lg border border-border-subtle hover:border-fire/30 transition-all"
+                  className="px-6 py-3 bg-raised hover:bg-fire/20 text-warm-white font-bold rounded-lg border border-border-subtle hover:border-fire/30 transition-all text-center flex-1 sm:flex-none"
                 >
                   Baca Chapter Terbaru
                 </Link>
                 <button
                   onClick={() => toggleBookmark(comic.id)}
-                  className={`px-4 py-3 rounded-lg border transition-all font-bold flex items-center gap-2 ${
+                  className={`px-4 py-3 rounded-lg border transition-all font-bold flex items-center justify-center gap-2 flex-1 sm:flex-none ${
                     isBookmarked
                       ? "bg-fire/20 border-fire text-fire"
                       : "bg-raised border-border-subtle text-warm-white hover:bg-fire/10 hover:border-fire/30"
@@ -369,33 +370,43 @@ export default function ComicDetail() {
               </div>
 
               <div className="bg-panel rounded-xl border border-border-subtle overflow-hidden">
-                {visibleChapterList.map((ch, i) => (
-                  <Link
-                    key={ch.number}
-                    to={`/comic/${comic.slug}/${ch.number}`}
-                    className={`flex items-center gap-4 px-4 py-3 hover:bg-raised transition-colors border-b border-border-subtle last:border-b-0 ${
-                      i % 2 === 0 ? "bg-panel" : "bg-void/50"
-                    }`}
-                  >
-                    <span className="text-sm text-text-muted w-12 flex-shrink-0">
-                      Ch. {ch.number}
-                    </span>
-                    <span className="flex-1 text-sm text-warm-white truncate">
-                      {ch.title}
-                    </span>
-                    <span className="text-xs text-text-muted hidden sm:block">
-                      {new Date(ch.date).toLocaleDateString("id-ID")}
-                    </span>
-                    <span className="text-xs text-text-muted hidden md:block">
-                      {ch.views}
-                    </span>
-                    {isNew(ch.date) && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-fire/20 text-fire font-semibold">
-                        NEW
+                {visibleChapterList.map((ch, i) => {
+                  const hasBeenRead = isChapterRead(comic.id, ch.number);
+                  return (
+                    <Link
+                      key={ch.number}
+                      to={`/comic/${comic.slug}/${ch.number}`}
+                      className={`flex items-center gap-4 px-4 py-3 hover:bg-raised transition-colors border-b border-border-subtle last:border-b-0 ${
+                        i % 2 === 0 ? "bg-panel" : "bg-void/50"
+                      }`}
+                    >
+                      <span className="text-sm text-text-muted w-12 flex-shrink-0">
+                        Ch. {ch.number}
                       </span>
-                    )}
-                  </Link>
-                ))}
+                      <span className={`flex-1 text-sm truncate transition-colors ${
+                        hasBeenRead ? "text-text-muted/60" : "text-warm-white"
+                      }`}>
+                        {ch.title}
+                      </span>
+                      <span className="text-xs text-text-muted hidden sm:block">
+                        {new Date(ch.date).toLocaleDateString("id-ID")}
+                      </span>
+                      <span className="text-xs text-text-muted hidden md:block">
+                        {ch.views}
+                      </span>
+                      {isNew(ch.date) && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-fire/20 text-fire font-semibold">
+                          NEW
+                        </span>
+                      )}
+                      {hasBeenRead && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-raised text-text-muted font-semibold">
+                          DIBACA
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
 
               {hasMoreChapters && (

@@ -10,7 +10,8 @@ import {
   RotateCcw,
   ChevronDown,
 } from "lucide-react";
-import { filterComics, VALID_GENRES, VALID_TYPES, VALID_STATUSES } from "@/lib/data";
+import { filterComics, VALID_GENRES, VALID_TYPES, VALID_STATUSES, comics } from "@/lib/data";
+import type { Comic } from "@/lib/data";
 import { sanitizeUrlParam } from "@/lib/sanitize";
 import { useDebounce, useMediaQuery } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
@@ -68,28 +69,62 @@ export default function Browse() {
   const searchResults = useStore((s) => s.searchResults);
   const searchComics = useStore((s) => s.searchComics);
   const isLoadingSearch = useStore((s) => s.isLoadingSearch);
+  const bookmarks = useStore((s) => s.bookmarks);
+  const loadedComics = useStore((s) => s.loadedComics);
+  const homepageComics = useStore((s) => s.homepageComics);
+
+  const urlBookmarked = searchParams.get("bookmarked") === "true";
+
+  // Combine all known comics to resolve bookmarked ones
+  const allKnownComics = useMemo(() => {
+    const map = new Map<string, Comic>();
+    comics.forEach((c) => map.set(c.id, c));
+    homepageComics.forEach((c) => map.set(c.id, c));
+    Object.values(loadedComics).forEach((c) => map.set(c.id, c));
+    return Array.from(map.values());
+  }, [homepageComics, loadedComics]);
 
   // Trigger search fetch
   useEffect(() => {
-    if (debouncedSearch.trim()) {
+    if (debouncedSearch.trim() && !urlBookmarked) {
       searchComics(debouncedSearch);
     }
-  }, [debouncedSearch, searchComics]);
+  }, [debouncedSearch, searchComics, urlBookmarked]);
 
   // Filter comics
   const filtered = useMemo(() => {
-    const baseList = debouncedSearch.trim() ? searchResults : filterComics(
-      selectedGenres,
-      statusFilter,
-      typeFilter,
-      minRating,
-      sortBy
-    );
+    let baseList: Comic[] = [];
+
+    if (urlBookmarked) {
+      // If we are on the bookmarked page, show bookmarked comics
+      baseList = allKnownComics.filter((c) => bookmarks.has(c.id));
+      
+      // If there is a search query, filter client-side
+      if (debouncedSearch.trim()) {
+        const query = debouncedSearch.toLowerCase();
+        baseList = baseList.filter((c) =>
+          c.title.toLowerCase().includes(query) ||
+          c.altTitle.toLowerCase().includes(query) ||
+          c.genres.some((g) => g.toLowerCase().includes(query))
+        );
+      }
+    } else if (debouncedSearch.trim()) {
+      baseList = searchResults;
+    } else {
+      baseList = filterComics(
+        selectedGenres,
+        statusFilter,
+        typeFilter,
+        minRating,
+        sortBy
+      );
+    }
 
     // Apply other filters client-side on the base list
     let result = [...baseList];
 
-    if (debouncedSearch.trim()) {
+    // For bookmarked page or search results, we apply category filters client-side
+    if (urlBookmarked || debouncedSearch.trim()) {
       if (selectedGenres.length > 0) {
         result = result.filter((c) =>
           selectedGenres.every((g) => c.genres.includes(g))
@@ -122,7 +157,18 @@ export default function Browse() {
     }
 
     return result;
-  }, [selectedGenres, statusFilter, typeFilter, minRating, sortBy, debouncedSearch, searchResults]);
+  }, [
+    urlBookmarked,
+    allKnownComics,
+    bookmarks,
+    selectedGenres,
+    statusFilter,
+    typeFilter,
+    minRating,
+    sortBy,
+    debouncedSearch,
+    searchResults
+  ]);
 
   const isCurrentlyLoading = !!debouncedSearch.trim() && isLoadingSearch;
 
@@ -167,7 +213,7 @@ export default function Browse() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <h1 className="font-display text-3xl tracking-wide text-warm-white">
-            JELAJAHI KOMIK
+            {urlBookmarked ? "BOOKMARK SAYA" : "JELAJAHI KOMIK"}
           </h1>
 
           {/* Search */}

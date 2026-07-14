@@ -43,9 +43,12 @@ interface AppState {
   searchResults: Comic[];
   isLoadingSearch: boolean;
   searchError: string | null;
+  readChapters: Record<string, number[]>;
 
   // Actions
   toggleBookmark: (comicId: string) => void;
+  markChapterAsRead: (comicId: string, chapterNum: number) => void;
+  isChapterRead: (comicId: string, chapterNum: number) => boolean;
   isBookmarked: (comicId: string) => boolean;
   updateReadingProgress: (
     comicId: string,
@@ -85,6 +88,7 @@ export const useStore = create<AppState>()(
       searchQuery: "",
       toasts: [],
       loadedComics: {},
+      readChapters: {},
       isLoadingComic: false,
       comicError: null,
       homepageComics: comics,
@@ -110,10 +114,10 @@ export const useStore = create<AppState>()(
         });
 
         // Add toast
-        const wasBookmarked = get().bookmarks.has(comicId);
+        const isCurrentlyBookmarked = get().bookmarks.has(comicId);
         get().addToast(
-          wasBookmarked ? "Dihapus dari bookmark" : "Ditambahkan ke bookmark",
-          wasBookmarked ? "info" : "success"
+          isCurrentlyBookmarked ? "Ditambahkan ke bookmark" : "Dihapus dari bookmark",
+          isCurrentlyBookmarked ? "success" : "info"
         );
       },
 
@@ -182,9 +186,35 @@ export const useStore = create<AppState>()(
         }));
       },
 
+      markChapterAsRead: (comicId: string, chapterNum: number) => {
+        set((state) => {
+          const list = state.readChapters[comicId] || [];
+          if (list.includes(chapterNum)) return {};
+          return {
+            readChapters: {
+              ...state.readChapters,
+              [comicId]: [...list, chapterNum],
+            },
+          };
+        });
+      },
+
+      isChapterRead: (comicId: string, chapterNum: number) => {
+        const list = get().readChapters[comicId] || [];
+        return list.includes(chapterNum);
+      },
+
       fetchComic: async (slug: string) => {
         let comic = getComicBySlug(slug);
         
+        if (!comic) {
+          comic = get().loadedComics[slug];
+        }
+
+        if (!comic) {
+          comic = get().searchResults.find((c) => c.slug === slug);
+        }
+
         if (!comic) {
           comic = get().homepageComics.find((c) => c.slug === slug);
         }
@@ -192,6 +222,13 @@ export const useStore = create<AppState>()(
         if (!comic) {
           const fetchedList = await get().fetchHomepageComics();
           comic = fetchedList.find((c) => c.slug === slug);
+        }
+
+        if (!comic) {
+          // Fallback: If still not found (e.g. on direct page refresh), try searching by slug
+          const searchQuery = slug.replace(/-/g, " ");
+          const searchResults = await get().searchComics(searchQuery);
+          comic = searchResults.find((c) => c.slug === slug);
         }
 
         if (!comic) return null;
@@ -352,6 +389,8 @@ export const useStore = create<AppState>()(
         readingHistory: state.readingHistory,
         currentTheme: state.currentTheme,
         readerSettings: state.readerSettings,
+        readChapters: state.readChapters,
+        loadedComics: state.loadedComics,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {

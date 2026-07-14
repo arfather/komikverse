@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import Toast from "@/components/ui/Toast";
@@ -6,6 +7,19 @@ import Home from "@/pages/Home";
 import ComicDetail from "@/pages/ComicDetail";
 import ChapterReader from "@/pages/ChapterReader";
 import Browse from "@/pages/Browse";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navType = useNavigationType();
+
+  useEffect(() => {
+    if (navType !== "POP") {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, navType]);
+
+  return null;
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,7 +34,9 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       <Route
         path="/"
         element={
@@ -68,5 +84,5 @@ export default function App() {
         }
       />
     </Routes>
-  );
+  </>)
 }

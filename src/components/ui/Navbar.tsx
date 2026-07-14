@@ -166,13 +166,13 @@ export default function Navbar() {
             </div>
 
             {/* Bookmark */}
-            {/* <Link
+            <Link
               to="/browse?bookmarked=true"
-              className="hidden sm:flex p-2 rounded-lg text-text-muted hover:text-warm-white hover:bg-raised transition-colors"
+              className="flex p-2 rounded-lg text-text-muted hover:text-warm-white hover:bg-raised transition-colors"
               aria-label="Bookmark"
             >
               <Bookmark className="w-5 h-5" />
-            </Link> */}
+            </Link>
 
             {/* Mobile Menu Toggle */}
             <button

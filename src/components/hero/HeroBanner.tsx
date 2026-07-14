@@ -26,10 +26,9 @@ export default function HeroBanner({ comics }: HeroBannerProps) {
 
   const current = comics[currentIndex];
   if (!current) return null;
-
   return (
     <div
-      className="relative w-full h-[85vh] min-h-[600px] overflow-hidden"
+      className="relative w-full h-[65vh] min-h-[450px] md:h-[85vh] md:min-h-[600px] overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -79,39 +78,39 @@ export default function HeroBanner({ comics }: HeroBannerProps) {
               </div>
 
               {/* Title */}
-              <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-warm-white leading-none tracking-wide uppercase mb-3">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-7xl lg:text-8xl text-warm-white leading-none tracking-wide uppercase mb-3 line-clamp-2">
                 {current.title}
               </h1>
 
               {/* Alt title */}
-              <p className="text-text-muted text-lg mb-4">{current.altTitle}</p>
+              <p className="text-text-muted text-sm sm:text-base md:text-lg mb-4 line-clamp-1">{current.altTitle}</p>
 
               {/* Rating & Stats */}
-              <div className="flex items-center gap-6 mb-6">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
+                <div className="flex items-center gap-1.5">
                   <StarRating
                     rating={Math.round(current.rating) / 2}
-                    size="md"
+                    size="sm"
                   />
-                  <span className="text-fire-gold font-bold text-lg">
+                  <span className="text-fire-gold font-bold text-base">
                     {current.rating}
                   </span>
                 </div>
-                <span className="text-text-muted text-sm">
+                <span className="text-text-muted text-xs sm:text-sm">
                   {current.totalVotes.toLocaleString()} votes
                 </span>
-                <span className="text-text-muted text-sm">
+                <span className="text-text-muted text-xs sm:text-sm">
                   {current.type}
                 </span>
               </div>
 
               {/* Synopsis */}
-              <p className="text-text-muted text-base leading-relaxed line-clamp-3 mb-8 max-w-lg">
+              <p className="text-text-muted text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 mb-6 sm:mb-8 max-w-lg">
                 {current.synopsis}
               </p>
 
               {/* Buttons */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <Link
                   to={`/comic/${current.slug}/${current.chapters[current.chapters.length - 1]?.number || 1}`}
                   className="px-6 py-3 bg-fire hover:bg-fire-glow text-white font-bold rounded-lg flex items-center gap-2 transition-colors shadow-bloom hover:shadow-bloom-lg"
@@ -133,8 +132,8 @@ export default function HeroBanner({ comics }: HeroBannerProps) {
       </div>
 
       {/* Thumbnail Navigation */}
-      <div className="absolute bottom-8 right-4 md:right-8 z-20">
-        <div className="flex gap-3">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-8 md:translate-x-0 z-20">
+        <div className="hidden md:flex gap-3">
           {comics.map((comic, index) => (
             <button
               key={comic.id}
@@ -159,7 +158,7 @@ export default function HeroBanner({ comics }: HeroBannerProps) {
         </div>
 
         {/* Dot Indicators */}
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2 mt-0 md:mt-4">
           {comics.map((_, index) => (
             <button
               key={index}

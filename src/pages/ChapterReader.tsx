@@ -45,26 +45,40 @@ export default function ChapterReader() {
 
   const comic = validSlug ? (loadedComics[validSlug] || getComicBySlug(validSlug)) : undefined;
 
+  const chapterExists = useMemo(() => {
+    return comic ? comic.chapters.some((c) => c.number === validChapter) : false;
+  }, [comic, validChapter]);
+
+  const markChapterAsRead = useStore((s) => s.markChapterAsRead);
+  const updateReadingProgress = useStore((s) => s.updateReadingProgress);
+
+  useEffect(() => {
+    if (comic && chapterExists) {
+      markChapterAsRead(comic.id, validChapter);
+      updateReadingProgress(comic.id, validChapter, 100);
+    }
+  }, [comic, chapterExists, validChapter, markChapterAsRead, updateReadingProgress]);
+
   if (!validSlug || Number.isNaN(validChapter)) {
     return <Navigate to="/404" replace />;
   }
 
-  if (!comic) {
-    if (isLoading || !hasAttemptedFetch) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-void">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-fire border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-text-muted">Memuat data komik...</p>
-          </div>
+  if (!hasAttemptedFetch || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-void">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-fire border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-muted">Memuat data komik...</p>
         </div>
-      );
-    }
+      </div>
+    );
+  }
+
+  if (!comic) {
     return <Navigate to="/404" replace />;
   }
 
   // Check if chapter exists
-  const chapterExists = comic.chapters.some((c) => c.number === validChapter);
   if (!chapterExists) {
     return <Navigate to={`/comic/${validSlug}`} replace />;
   }
