@@ -11,8 +11,31 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showFooter, setShowFooter] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 10) {
+        setShowFooter(true);
+      } else if (currentScrollY > lastScrollY.current + 5) {
+        setShowFooter(false);
+      } else if (currentScrollY < lastScrollY.current - 5) {
+        setShowFooter(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -126,6 +149,15 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
             draggable={false}
             style={{ userSelect: "none" } as React.CSSProperties}
           />
+          {/* Preload next page in background */}
+          {currentPage < pages.length - 1 && (
+            <img
+              src={pages[currentPage + 1]}
+              alt=""
+              className="hidden w-0 h-0 absolute pointer-events-none"
+              aria-hidden="true"
+            />
+          )}
         </div>
 
         {/* Navigation arrows */}
@@ -182,7 +214,9 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
       </div>
 
       {/* Bottom progress bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-void/95 backdrop-blur-md border-t border-border-subtle">
+      <div className={`fixed bottom-0 left-0 right-0 z-40 bg-void/95 backdrop-blur-md border-t border-border-subtle transition-transform duration-300 ${
+        showFooter ? "translate-y-0" : "translate-y-full"
+      }`}>
         <div className="max-w-2xl mx-auto px-4 py-3">
           {/* Progress */}
           <div className="w-full h-1 bg-raised rounded-full mb-2">

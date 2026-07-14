@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,8 +20,10 @@ import PageReader from "@/components/reader/PageReader";
 export default function ChapterReader() {
   const { slug, chapter } = useParams<{ slug: string; chapter: string }>();
   const [showSettings, setShowSettings] = useState(false);
+  const [showFooter, setShowFooter] = useState(true);
   const readerSettings = useStore((s) => s.readerSettings);
   const updateReaderSettings = useStore((s) => s.updateReaderSettings);
+  const lastScrollY = useRef(0);
 
   // Security: validate both slug and chapter
   const validSlug = useMemo(() => sanitizeSlug(slug), [slug]);
@@ -29,6 +31,27 @@ export default function ChapterReader() {
     () => sanitizeChapterNum(chapter),
     [chapter]
   );
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 10) {
+        setShowFooter(true);
+      } else if (currentScrollY > lastScrollY.current + 5) {
+        setShowFooter(false);
+      } else if (currentScrollY < lastScrollY.current - 5) {
+        setShowFooter(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const loadedComics = useStore((s) => s.loadedComics);
   const fetchComic = useStore((s) => s.fetchComic);
@@ -134,7 +157,9 @@ export default function ChapterReader() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-void/95 backdrop-blur-md border-t border-border-subtle">
+      <div className={`fixed bottom-0 left-0 right-0 z-40 bg-void/95 backdrop-blur-md border-t border-border-subtle transition-transform duration-300 ${
+        showFooter ? "translate-y-0" : "translate-y-full"
+      }`}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           {prevChapter ? (
             <Link

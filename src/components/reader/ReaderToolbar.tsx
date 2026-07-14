@@ -25,6 +25,7 @@ export default function ReaderToolbar({
   const [isVisible, setIsVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastScrollY = useRef(0);
   const toggleBookmark = useStore((s) => s.toggleBookmark);
   const isBookmarked = useStore((s) => s.isBookmarked(comic.id));
 
@@ -35,7 +36,7 @@ export default function ReaderToolbar({
   }, []);
 
   useEffect(() => {
-    const events = ["mousemove", "click", "touchstart", "scroll"];
+    const events = ["mousemove", "click", "touchstart"];
     events.forEach((e) => document.addEventListener(e, resetIdleTimer));
     resetIdleTimer();
 
@@ -43,8 +44,30 @@ export default function ReaderToolbar({
       events.forEach((e) => document.removeEventListener(e, resetIdleTimer));
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [resetIdleTimer]);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 10) {
+        setIsVisible(true);
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      } else if (currentScrollY > lastScrollY.current + 5) {
+        setIsVisible(false);
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      } else if (currentScrollY < lastScrollY.current - 5) {
+        resetIdleTimer();
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [resetIdleTimer]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {

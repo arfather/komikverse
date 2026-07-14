@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { isValidStorageKey } from "./sanitize";
 import type { Comic, ApiChapterDetail } from "./data";
+import { fetchEncrypted } from "./crypto";
 
 /**
  * useLocalStorage - Persist state to localStorage with SSR safety
@@ -239,16 +240,11 @@ export function useChapterPages(comic: Comic, chapter: number) {
         setError(null);
       });
 
-      const urlTemplate = comic.api?.chapterDetail?.urls?.url || "https://api.shngm.io/v1/chapter/detail/{id_chapter}";
-      const fetchUrl = urlTemplate.replace("{id_chapter}", chapterId);
+      const urlTemplate = comic.api?.chapterDetail?.urls?.url || "/api/v1/chapter/detail/{id_chapter}";
+      const cleanApiUrl = (url: string) => url.replace("https://api.shngm.io", "/api");
+      const fetchUrl = cleanApiUrl(urlTemplate.replace("{id_chapter}", chapterId));
 
-      fetch(fetchUrl)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`Failed to fetch pages: ${res.statusText}`);
-          }
-          return res.json();
-        })
+      fetchEncrypted(fetchUrl)
         .then((json) => {
           const data: ApiChapterDetail | null = json.data ? json.data : (json.chapter_id ? json : null);
           if (data) {

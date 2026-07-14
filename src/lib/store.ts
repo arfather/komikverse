@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { sanitizeSearchQuery } from "./sanitize";
 import { comics, getComicBySlug, mapApiMangaToComic, mapApiMangaListToComics } from "./data";
 import type { Comic } from "./data";
+import { fetchEncrypted } from "./crypto";
 
 interface ReadingProgress {
   comicId: string;
@@ -249,10 +250,11 @@ export const useStore = create<AppState>()(
 
         try {
           const apiConfig = comic.api;
-          const detailUrl = apiConfig.detail?.urls?.url;
+          const cleanApiUrl = (url: string) => url.replace("https://api.shngm.io", "/api");
+          const detailUrl = apiConfig.detail?.urls?.url ? cleanApiUrl(apiConfig.detail.urls.url) : "";
           
           // Substitute {id} in chapters list URL and set page_size to 200 to fetch all chapters
-          const chaptersBaseUrl = apiConfig.chapters?.urls?.url || "";
+          const chaptersBaseUrl = apiConfig.chapters?.urls?.url ? cleanApiUrl(apiConfig.chapters.urls.url) : "";
           const chaptersId = apiConfig.chapters?.id || "";
           const substitutedUrl = chaptersBaseUrl.replace("{id}", chaptersId);
           const chaptersUrl = `${substitutedUrl}?page=1&page_size=200&sort_by=chapter_number&sort_order=desc`;
@@ -262,20 +264,10 @@ export const useStore = create<AppState>()(
           }
 
           // Fetch details and chapters in parallel
-          const [detailRes, chaptersRes] = await Promise.all([
-            fetch(detailUrl),
-            fetch(chaptersUrl),
+          const [detailJson, chaptersJson] = await Promise.all([
+            fetchEncrypted(detailUrl),
+            fetchEncrypted(chaptersUrl),
           ]);
-
-          if (!detailRes.ok) {
-            throw new Error(`Failed to fetch comic details: ${detailRes.statusText}`);
-          }
-          if (!chaptersRes.ok) {
-            throw new Error(`Failed to fetch chapters: ${chaptersRes.statusText}`);
-          }
-
-          const detailJson = await detailRes.json();
-          const chaptersJson = await chaptersRes.json();
 
           if (detailJson.retcode !== 0 || !detailJson.data) {
             throw new Error(detailJson.message || "Failed to fetch details data");
@@ -308,13 +300,10 @@ export const useStore = create<AppState>()(
       },
 
       fetchHomepageComics: async () => {
+        if (get().isLoadingHomepage) return get().homepageComics;
         set({ isLoadingHomepage: true, homepageError: null });
         try {
-          const res = await fetch("https://api.shngm.io/v1/manga/list?type=project&page=1&page_size=24&is_update=true&sort=latest&sort_order=desc");
-          if (!res.ok) {
-            throw new Error(`Failed to fetch homepage comics: ${res.statusText}`);
-          }
-          const json = await res.json();
+          const json = await fetchEncrypted("/api/v1/manga/list?type=project&page=1&page_size=24&is_update=true&sort=latest&sort_order=desc");
           if (json.retcode !== 0 || !json.data) {
             throw new Error(json.message || "Failed to fetch homepage data");
           }
@@ -344,11 +333,7 @@ export const useStore = create<AppState>()(
         }
         set({ isLoadingSearch: true, searchError: null });
         try {
-          const res = await fetch(`https://api.shngm.io/v1/manga/list?page=1&page_size=24&q=${encodeURIComponent(query)}`);
-          if (!res.ok) {
-            throw new Error(`Search failed: ${res.statusText}`);
-          }
-          const json = await res.json();
+          const json = await fetchEncrypted(`/api/v1/manga/list?page=1&page_size=24&q=${encodeURIComponent(query)}`);
           if (json.retcode !== 0 || !json.data) {
             throw new Error(json.message || "Failed to parse search results");
           }

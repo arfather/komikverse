@@ -493,14 +493,14 @@ export function mapApiMangaListToComics(dataList: ApiMangaListItem[]): Comic[] {
       detail: {
         id: item.manga_id,
         urls: {
-          url: `https://api.shngm.io/v1/manga/detail/${item.manga_id}`,
+          url: `/api/v1/manga/detail/${item.manga_id}`,
           params: null
         }
       },
       chapters: {
         id: item.manga_id,
         urls: {
-          url: `https://api.shngm.io/v1/chapter/${item.manga_id}/list`,
+          url: `/api/v1/chapter/${item.manga_id}/list`,
           params: {
             page: 1,
             page_size: 200,
@@ -511,7 +511,7 @@ export function mapApiMangaListToComics(dataList: ApiMangaListItem[]): Comic[] {
       },
       chapterDetail: {
         urls: {
-          url: "https://api.shngm.io/v1/chapter/detail/{id_chapter}",
+          url: "/api/v1/chapter/detail/{id_chapter}",
           params: null
         }
       }

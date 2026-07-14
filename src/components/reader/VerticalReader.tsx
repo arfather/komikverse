@@ -10,15 +10,41 @@ interface VerticalReaderProps {
 export default function VerticalReader({ comic, chapter }: VerticalReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
+  const [maxLoadingIndex, setMaxLoadingIndex] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showIndicator, setShowIndicator] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     Promise.resolve().then(() => {
       setLoadedPages(new Set());
+      setMaxLoadingIndex(0);
       setCurrentPage(1);
+      setShowIndicator(true);
     });
   }, [comic.slug, chapter]);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 10) {
+        setShowIndicator(true);
+      } else if (currentScrollY > lastScrollY.current + 5) {
+        setShowIndicator(false);
+      } else if (currentScrollY < lastScrollY.current - 5) {
+        setShowIndicator(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Disable context menu and text selection
   useEffect(() => {
@@ -27,26 +53,9 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
     return () => document.removeEventListener("contextmenu", preventDefault);
   }, []);
 
-  // IntersectionObserver for lazy loading and page tracking
+  // IntersectionObserver for page tracking
   useEffect(() => {
     if (!containerRef.current) return;
-
-    const observers: IntersectionObserver[] = [];
-
-    // Lazy loading observer
-    const loadObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = Number(entry.target.getAttribute("data-index"));
-            if (!isNaN(idx)) {
-              setLoadedPages((prev) => new Set(prev).add(idx));
-            }
-          }
-        });
-      },
-      { rootMargin: "200px" }
-    );
 
     // Page tracking observer
     const trackObserver = new IntersectionObserver(
@@ -65,25 +74,28 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
 
     const elements = containerRef.current.querySelectorAll("[data-index]");
     elements.forEach((el) => {
-      loadObserver.observe(el);
       trackObserver.observe(el);
     });
 
-    observers.push(loadObserver, trackObserver);
-
     return () => {
-      observers.forEach((o) => o.disconnect());
+      trackObserver.disconnect();
     };
   }, [pages]);
 
   const handleImageLoad = useCallback((index: number) => {
-    setLoadedPages((prev) => new Set(prev).add(index));
+    setLoadedPages((prev) => {
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
   }, []);
 
   return (
     <div className="min-h-screen bg-void pt-14" ref={containerRef}>
       {/* Page indicator */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-black/70 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm text-warm-white pointer-events-none">
+      <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-black/70 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm text-warm-white pointer-events-none transition-all duration-300 ${
+        showIndicator ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}>
         Hal. {currentPage} / {pages.length}
       </div>
 
@@ -103,18 +115,26 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
             className="relative w-full watermark-overlay"
           >
             {!loadedPages.has(index) && (
-              <div className="w-full aspect-[2/3] shimmer rounded-lg" />
+              <div className="w-full aspect-[2/3] shimmer rounded-lg animate-pulse" />
             )}
-            <img
-              src={pageUrl}
-              alt={`Halaman ${index + 1}`}
-              className={`w-full reader-image select-none ${
-                loadedPages.has(index) ? "block" : "hidden"
-              }`}
-              onLoad={() => handleImageLoad(index)}
-              draggable={false}
-              style={{ userSelect: "none" } as React.CSSProperties}
-            />
+            {index <= maxLoadingIndex && (
+              <img
+                src={pageUrl}
+                alt={`Halaman ${index + 1}`}
+                className={`w-full reader-image select-none transition-opacity duration-300 ${
+                  loadedPages.has(index) ? "block opacity-100" : "hidden opacity-0"
+                }`}
+                onLoad={() => {
+                  handleImageLoad(index);
+                  setMaxLoadingIndex((prev) => Math.max(prev, index + 1));
+                }}
+                onError={() => {
+                  setMaxLoadingIndex((prev) => Math.max(prev, index + 1));
+                }}
+                draggable={false}
+                style={{ userSelect: "none" } as React.CSSProperties}
+              />
+            )}
           </div>
         ))}
       </div>
