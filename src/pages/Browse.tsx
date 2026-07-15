@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   SlidersHorizontal,
@@ -28,6 +28,7 @@ const SORT_OPTIONS = [
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   useMediaQuery("(max-width: 768px)");
 
   // Read filters from URL
@@ -54,17 +55,49 @@ export default function Browse() {
   );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [searchInput, setSearchInput] = useState(urlSearch || "");
+  const searchQuery = useStore((s) => s.searchQuery);
+  const setSearchQuery = useStore((s) => s.setSearchQuery);
+  const [searchInput, setSearchInput] = useState(urlSearch || searchQuery || "");
   const [visibleCount, setVisibleCount] = useState(24);
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  // Update search query in store
+  // Sync searchInput when store searchQuery changes (e.g. from navbar search input)
   useEffect(() => {
-    if (debouncedSearch) {
-      useStore.getState().setSearchQuery(debouncedSearch);
+    if (location.pathname !== "/browse") return;
+    setSearchInput(searchQuery);
+  }, [searchQuery, location.pathname]);
+
+  // Sync search query from URL to store
+  useEffect(() => {
+    if (location.pathname !== "/browse") return;
+    const currentStoreQuery = useStore.getState().searchQuery;
+    if (urlSearch !== null && urlSearch !== currentStoreQuery) {
+      setSearchQuery(urlSearch);
+    } else if (urlSearch === null && currentStoreQuery !== "") {
+      setSearchQuery("");
     }
-  }, [debouncedSearch]);
+  }, [urlSearch, setSearchQuery, location.pathname]);
+
+  // Update URL search parameter and store searchQuery when debouncedSearch changes
+  useEffect(() => {
+    if (location.pathname !== "/browse") return;
+
+    const currentStoreQuery = useStore.getState().searchQuery;
+    if (debouncedSearch !== currentStoreQuery) {
+      setSearchQuery(debouncedSearch);
+    }
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (debouncedSearch) {
+        next.set("search", debouncedSearch);
+      } else {
+        next.delete("search");
+      }
+      return next;
+    }, { replace: true });
+  }, [debouncedSearch, setSearchParams, setSearchQuery, location.pathname]);
 
   const searchResults = useStore((s) => s.searchResults);
   const searchComics = useStore((s) => s.searchComics);

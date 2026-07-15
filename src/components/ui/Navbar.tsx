@@ -19,15 +19,20 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const scrollY = useScrollPosition();
+  const setSearchQuery = useStore((s) => s.setSearchQuery);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const setSearchQuery = useStore((s) => s.setSearchQuery);
+  const pathnameRef = useRef(location.pathname);
   const { isAllowed, recordRequest } = useRateLimit(30, 60000);
 
   const debouncedSearch = useDebounce(searchValue, 300);
+
+  useEffect(() => {
+    pathnameRef.current = location.pathname;
+  }, [location.pathname]);
 
   useEffect(() => {
     setIsScrolled(scrollY > 50);
@@ -39,15 +44,17 @@ export default function Navbar() {
     }
   }, [searchOpen]);
 
+
   useEffect(() => {
     const sanitized = sanitizeSearchQuery(debouncedSearch);
-    if (sanitized.length > 0) {
+    const rawSanitized = sanitizeSearchQuery(searchValue);
+    if (sanitized.length > 0 && rawSanitized.length > 0) {
       setSearchQuery(sanitized);
-      if (location.pathname !== "/browse") {
+      if (pathnameRef.current !== "/browse") {
         navigate(`/browse?search=${encodeURIComponent(sanitized)}`);
       }
     }
-  }, [debouncedSearch, setSearchQuery, location.pathname, navigate]);
+  }, [debouncedSearch, searchValue, setSearchQuery, navigate]);
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -55,6 +62,9 @@ export default function Navbar() {
       setSearchValue("");
       setSearchOpen(false);
       setSearchQuery("");
+    } else {
+      setSearchValue("");
+      setSearchOpen(false);
     }
   }, [location.pathname, setSearchQuery]);
 
@@ -126,44 +136,46 @@ export default function Navbar() {
           {/* Right Actions */}
           <div className="flex items-center gap-2">
             {/* Search */}
-            <div className="relative">
-              {searchOpen ? (
-                <form
-                  onSubmit={handleSearchSubmit}
-                  className="flex items-center gap-2"
-                >
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    placeholder="Cari komik..."
-                    maxLength={100}
-                    className="w-48 lg:w-64 bg-raised border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-warm-white placeholder:text-text-muted focus:outline-none focus:border-fire transition-colors"
-                    aria-label="Cari komik"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchOpen(false);
-                      setSearchValue("");
-                    }}
-                    className="p-1.5 text-text-muted hover:text-warm-white transition-colors"
-                    aria-label="Tutup pencarian"
+            {location.pathname !== "/browse" && (
+              <div className="relative">
+                {searchOpen ? (
+                  <form
+                    onSubmit={handleSearchSubmit}
+                    className="flex items-center gap-2"
                   >
-                    <X className="w-4 h-4" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      placeholder="Cari komik..."
+                      maxLength={100}
+                      className="w-48 lg:w-64 bg-raised border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-warm-white placeholder:text-text-muted focus:outline-none focus:border-fire transition-colors"
+                      aria-label="Cari komik"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setSearchValue("");
+                      }}
+                      className="p-1.5 text-text-muted hover:text-warm-white transition-colors"
+                      aria-label="Tutup pencarian"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setSearchOpen(true)}
+                    className="p-2 rounded-lg text-text-muted hover:text-warm-white hover:bg-raised transition-colors"
+                    aria-label="Buka pencarian"
+                  >
+                    <Search className="w-5 h-5" />
                   </button>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setSearchOpen(true)}
-                  className="p-2 rounded-lg text-text-muted hover:text-warm-white hover:bg-raised transition-colors"
-                  aria-label="Buka pencarian"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Bookmark */}
             <Link

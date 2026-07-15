@@ -206,10 +206,16 @@ export const useStore = create<AppState>()(
       },
 
       fetchComic: async (slug: string) => {
+        // 1. Check if we already have the fully loaded comic in cache
+        const cached = get().loadedComics[slug];
+        if (cached && cached.chapters && cached.chapters.length > 0 && cached.api) {
+          return cached;
+        }
+
         let comic = getComicBySlug(slug);
         
         if (!comic) {
-          comic = get().loadedComics[slug];
+          comic = cached;
         }
 
         if (!comic) {

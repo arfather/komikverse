@@ -29,7 +29,6 @@ export default function ComicDetail() {
   const [chapterSort, setChapterSort] = useState<"newest" | "oldest">("newest");
   const [visibleChapters, setVisibleChapters] = useState(20);
   const toggleBookmark = useStore((s) => s.toggleBookmark);
-  const isBookmarked = useStore((s) => s.isBookmarked(slug || ""));
   const isChapterRead = useStore((s) => s.isChapterRead);
 
   // Security: validate slug
@@ -38,7 +37,24 @@ export default function ComicDetail() {
   const loadedComics = useStore((s) => s.loadedComics);
   const fetchComic = useStore((s) => s.fetchComic);
   const isLoading = useStore((s) => s.isLoadingComic);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+
+  const comic = useMemo(() => {
+    return validSlug ? (loadedComics[validSlug] || getComicBySlug(validSlug)) : undefined;
+  }, [validSlug, loadedComics]);
+
+  const isBookmarked = useStore((s) => s.isBookmarked(comic?.id || ""));
+
+  const hasChaptersCached = useMemo(() => {
+    return !!(comic && comic.chapters && comic.chapters.length > 0 && comic.api);
+  }, [comic]);
+
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(hasChaptersCached);
+
+  useEffect(() => {
+    if (hasChaptersCached) {
+      setHasAttemptedFetch(true);
+    }
+  }, [hasChaptersCached]);
 
   useEffect(() => {
     if (validSlug) {
@@ -48,10 +64,8 @@ export default function ComicDetail() {
     }
   }, [validSlug, fetchComic]);
 
-  const comic = validSlug ? (loadedComics[validSlug] || getComicBySlug(validSlug)) : undefined;
-
   const sortedChapters = useMemo(() => {
-    if (!comic) return [];
+    if (!comic || !comic.chapters) return [];
     const chapters = [...comic.chapters];
     return chapterSort === "newest"
       ? chapters.sort((a, b) => b.number - a.number)
@@ -130,8 +144,9 @@ export default function ComicDetail() {
     },
   ];
 
-  const firstChapter = comic.chapters[comic.chapters.length - 1]?.number || 1;
-  const latestChapter = comic.chapters[0]?.number || 1;
+  const chaptersList = comic.chapters || [];
+  const firstChapter = chaptersList[chaptersList.length - 1]?.number || 1;
+  const latestChapter = chaptersList[0]?.number || 1;
 
   return (
     <div className="min-h-screen bg-void pt-16">

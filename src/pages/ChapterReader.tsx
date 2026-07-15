@@ -56,7 +56,22 @@ export default function ChapterReader() {
   const loadedComics = useStore((s) => s.loadedComics);
   const fetchComic = useStore((s) => s.fetchComic);
   const isLoading = useStore((s) => s.isLoadingComic);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+
+  const comic = useMemo(() => {
+    return validSlug ? (loadedComics[validSlug] || getComicBySlug(validSlug)) : undefined;
+  }, [validSlug, loadedComics]);
+
+  const hasChaptersCached = useMemo(() => {
+    return !!(comic && comic.chapters && comic.chapters.length > 0 && comic.api);
+  }, [comic]);
+
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(hasChaptersCached);
+
+  useEffect(() => {
+    if (hasChaptersCached) {
+      setHasAttemptedFetch(true);
+    }
+  }, [hasChaptersCached]);
 
   useEffect(() => {
     if (validSlug) {
@@ -66,10 +81,8 @@ export default function ChapterReader() {
     }
   }, [validSlug, fetchComic]);
 
-  const comic = validSlug ? (loadedComics[validSlug] || getComicBySlug(validSlug)) : undefined;
-
   const chapterExists = useMemo(() => {
-    return comic ? comic.chapters.some((c) => c.number === validChapter) : false;
+    return comic && comic.chapters ? comic.chapters.some((c) => c.number === validChapter) : false;
   }, [comic, validChapter]);
 
   const markChapterAsRead = useStore((s) => s.markChapterAsRead);
