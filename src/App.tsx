@@ -9,6 +9,7 @@ import ComicDetail from "@/pages/ComicDetail";
 import ChapterReader from "@/pages/ChapterReader";
 import Browse from "@/pages/Browse";
 import { ShieldAlert } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 import Audience from "@/pages/Audience";
 import { trackPageView } from "@/lib/tracker";
 
@@ -147,6 +148,7 @@ export default function App() {
 
   return (
     <>
+      <Analytics />
       <GlobalAdScripts />
       <ScrollToTop />
       <Routes>
