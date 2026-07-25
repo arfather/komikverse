@@ -52,7 +52,9 @@ export default function ComicDetail() {
 
   useEffect(() => {
     if (hasChaptersCached) {
-      setHasAttemptedFetch(true);
+      Promise.resolve().then(() => {
+        setHasAttemptedFetch(true);
+      });
     }
   }, [hasChaptersCached]);
 

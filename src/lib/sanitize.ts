@@ -15,7 +15,7 @@ const MAX_SLUG_LENGTH = 100;
 export function sanitizeSearchQuery(input: unknown): string {
   if (typeof input !== "string") return "";
 
-  let sanitized = input
+  const sanitized = input
     .replace(/<[^>]*>/g, "") // Strip HTML tags
     .replace(/[<>"'&]/g, (match) => {
       const entities: Record<string, string> = {

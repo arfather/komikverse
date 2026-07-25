@@ -69,7 +69,9 @@ export default function ChapterReader() {
 
   useEffect(() => {
     if (hasChaptersCached) {
-      setHasAttemptedFetch(true);
+      Promise.resolve().then(() => {
+        setHasAttemptedFetch(true);
+      });
     }
   }, [hasChaptersCached]);
 

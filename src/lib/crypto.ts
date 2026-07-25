@@ -32,14 +32,16 @@ export async function decryptData(ciphertextBase64: string): Promise<string> {
   return sodium.to_string(decrypted);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pendingFetches = new Map<string, Promise<any>>();
 
-export async function fetchEncrypted(url: string, options?: RequestInit): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchEncrypted<T = any>(url: string, options?: RequestInit): Promise<T> {
   const isGet = !options || !options.method || options.method.toUpperCase() === "GET";
   
   if (isGet) {
     const pending = pendingFetches.get(url);
-    if (pending) return pending;
+    if (pending) return pending as Promise<T>;
   }
 
   const promise = (async () => {
@@ -66,5 +68,5 @@ export async function fetchEncrypted(url: string, options?: RequestInit): Promis
     pendingFetches.set(url, promise);
   }
 
-  return promise;
+  return promise as Promise<T>;
 }

@@ -71,6 +71,7 @@ export interface Comic {
   updatedAt: string;
   isNew: boolean;
   isFeatured: boolean;
+  isFullyLoaded?: boolean;
   chapters: Chapter[];
 }
 
@@ -387,6 +388,7 @@ export function mapApiMangaToComic(detail: ApiMangaDetail, chaptersList: ApiChap
 
   return {
     ...staticComic,
+    isFullyLoaded: true,
     title: detail.title || staticComic.title,
     altTitle: detail.alternative_title || staticComic.altTitle,
     type: comicType,
@@ -540,6 +542,7 @@ export function mapApiMangaListToComics(dataList: ApiMangaListItem[]): Comic[] {
       updatedAt: item.latest_chapter_time ? item.latest_chapter_time.split("T")[0] : "",
       isNew: item.latest_chapter_time ? new Date(item.latest_chapter_time) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : false,
       isFeatured: item.is_recommended || false,
+      isFullyLoaded: false,
       chapters: mappedChapters,
     };
   });

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bookmark, Eye } from "lucide-react";
@@ -50,9 +50,11 @@ export default function ComicCard({
   const tiltX = (mousePos.y - 0.5) * 5;
   const tiltY = (mousePos.x - 0.5) * -5;
 
+  const [isHovered, setIsHovered] = useState(false);
+  const [now] = useState(() => Date.now());
   const isNewChapter =
     new Date(comic.updatedAt) >
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    new Date(now - 7 * 24 * 60 * 60 * 1000);
 
   if (variant === "list") {
     return (
@@ -148,16 +150,17 @@ export default function ComicCard({
       <Link to={`/comic/${comic.slug}`} className="block group relative">
         <motion.div
           ref={cardRef}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
           className="relative rounded-xl bg-panel border border-border-subtle hover:border-fire/30 transition-all overflow-hidden"
           style={{
             perspective: "1000px",
-            transform:
-              cardRef.current && cardRef.current.matches(":hover")
-                ? `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
-                : undefined,
+            transform: isHovered
+              ? `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
+              : undefined,
           }}
         >
           {/* Rank Badge */}

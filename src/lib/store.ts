@@ -101,24 +101,26 @@ export const useStore = create<AppState>()(
 
       // Actions
       toggleBookmark: (comicId: string) => {
+        let isNowBookmarked = false;
         set((state) => {
           const newBookmarks = new Set(state.bookmarks);
           const wasBookmarked = newBookmarks.has(comicId);
 
           if (wasBookmarked) {
             newBookmarks.delete(comicId);
+            isNowBookmarked = false;
           } else {
             newBookmarks.add(comicId);
+            isNowBookmarked = true;
           }
 
           return { bookmarks: newBookmarks };
         });
 
         // Add toast
-        const isCurrentlyBookmarked = get().bookmarks.has(comicId);
         get().addToast(
-          isCurrentlyBookmarked ? "Ditambahkan ke bookmark" : "Dihapus dari bookmark",
-          isCurrentlyBookmarked ? "success" : "info"
+          isNowBookmarked ? "Ditambahkan ke bookmark" : "Dihapus dari bookmark",
+          isNowBookmarked ? "success" : "info"
         );
       },
 
@@ -206,9 +208,16 @@ export const useStore = create<AppState>()(
       },
 
       fetchComic: async (slug: string) => {
-        // 1. Check if we already have the fully loaded comic in cache
+        // 1. Check if we already have the fully loaded comic in cache and it is up to date
         const cached = get().loadedComics[slug];
-        if (cached && cached.chapters && cached.chapters.length > 0 && cached.api) {
+        if (
+          cached &&
+          cached.isFullyLoaded &&
+          cached.chapters &&
+          cached.chapters.length > 0 &&
+          cached.api &&
+          cached.chapters[0]?.number >= cached.latestChapter
+        ) {
           return cached;
         }
 
@@ -259,11 +268,11 @@ export const useStore = create<AppState>()(
           const cleanApiUrl = (url: string) => url.replace("https://api.shngm.io", "/api");
           const detailUrl = apiConfig.detail?.urls?.url ? cleanApiUrl(apiConfig.detail.urls.url) : "";
           
-          // Substitute {id} in chapters list URL and set page_size to 200 to fetch all chapters
+          // Substitute {id} in chapters list URL and set page_size to 1000 to fetch all chapters
           const chaptersBaseUrl = apiConfig.chapters?.urls?.url ? cleanApiUrl(apiConfig.chapters.urls.url) : "";
           const chaptersId = apiConfig.chapters?.id || "";
           const substitutedUrl = chaptersBaseUrl.replace("{id}", chaptersId);
-          const chaptersUrl = `${substitutedUrl}?page=1&page_size=200&sort_by=chapter_number&sort_order=desc`;
+          const chaptersUrl = `${substitutedUrl}?page=1&page_size=1000&sort_by=chapter_number&sort_order=desc`;
 
           if (!detailUrl || !chaptersBaseUrl) {
             throw new Error("Invalid API configuration");
@@ -316,10 +325,28 @@ export const useStore = create<AppState>()(
 
           const mapped = mapApiMangaListToComics(json.data);
 
-          set({
-            homepageComics: mapped,
-            isLoadingHomepage: false,
+          set((state) => {
+            const updatedLoaded = { ...state.loadedComics };
+            mapped.forEach((c) => {
+              const existing = updatedLoaded[c.slug];
+              if (!existing || !existing.isFullyLoaded) {
+                updatedLoaded[c.slug] = c;
+              } else {
+                updatedLoaded[c.slug] = {
+                  ...existing,
+                  latestChapter: Math.max(existing.latestChapter, c.latestChapter),
+                  updatedAt: c.updatedAt || existing.updatedAt,
+                  isNew: c.isNew,
+                };
+              }
+            });
+            return {
+              homepageComics: mapped,
+              loadedComics: updatedLoaded,
+              isLoadingHomepage: false,
+            };
           });
+
           return mapped;
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Failed to fetch homepage data";
@@ -349,8 +376,16 @@ export const useStore = create<AppState>()(
           set((state) => {
             const updatedLoaded = { ...state.loadedComics };
             mapped.forEach((c) => {
-              if (!updatedLoaded[c.slug] || !updatedLoaded[c.slug].chapters || updatedLoaded[c.slug].chapters.length <= 3) {
+              const existing = updatedLoaded[c.slug];
+              if (!existing || !existing.isFullyLoaded) {
                 updatedLoaded[c.slug] = c;
+              } else {
+                updatedLoaded[c.slug] = {
+                  ...existing,
+                  latestChapter: Math.max(existing.latestChapter, c.latestChapter),
+                  updatedAt: c.updatedAt || existing.updatedAt,
+                  isNew: c.isNew,
+                };
               }
             });
             return {

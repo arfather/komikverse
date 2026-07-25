@@ -65,7 +65,9 @@ export default function Browse() {
   // Sync searchInput when store searchQuery changes (e.g. from navbar search input)
   useEffect(() => {
     if (location.pathname !== "/browse") return;
-    setSearchInput(searchQuery);
+    Promise.resolve().then(() => {
+      setSearchInput((prev) => (prev !== searchQuery ? searchQuery : prev));
+    });
   }, [searchQuery, location.pathname]);
 
   // Sync search query from URL to store

@@ -38,7 +38,9 @@ export default function ReaderToolbar({
   useEffect(() => {
     const events = ["mousemove", "click", "touchstart"];
     events.forEach((e) => document.addEventListener(e, resetIdleTimer));
-    resetIdleTimer();
+    
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => setIsVisible(false), 3000);
 
     return () => {
       events.forEach((e) => document.removeEventListener(e, resetIdleTimer));
