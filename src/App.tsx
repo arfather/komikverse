@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, useNavigationType } from "react-router-dom"
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import Toast from "@/components/ui/Toast";
+import AdSlot from "@/components/ads/AdSlot";
 import Home from "@/pages/Home";
 import ComicDetail from "@/pages/ComicDetail";
 import ChapterReader from "@/pages/ChapterReader";
@@ -23,9 +24,13 @@ function ScrollToTop() {
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-void">
+    <div className="min-h-screen bg-void flex flex-col">
       <Navbar />
-      {children}
+      <div className="pt-16">
+        <AdSlot position="header" adsterraKey="5936357" className="px-4" />
+      </div>
+      <main className="flex-1">{children}</main>
+      <AdSlot position="footer" adsterraKey="5936357" className="px-4" />
       <Footer />
       <Toast />
     </div>
