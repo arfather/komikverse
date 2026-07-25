@@ -46,7 +46,7 @@ export function getOrCreateVisitorId(): string {
 /**
  * Mencatat setiap kunjungan halaman (Pageview) secara aktual
  */
-export function trackPageView(pathname: string): void {
+export function trackPageView(_pathname: string): void {
   try {
     getOrCreateVisitorId();
 

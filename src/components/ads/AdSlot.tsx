@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ExternalLink, Sparkles } from "lucide-react";
 
 interface AdSlotProps {
