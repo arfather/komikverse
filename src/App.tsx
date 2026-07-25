@@ -8,8 +8,11 @@ import Home from "@/pages/Home";
 import ComicDetail from "@/pages/ComicDetail";
 import ChapterReader from "@/pages/ChapterReader";
 import Browse from "@/pages/Browse";
+import { ShieldAlert } from "lucide-react";
 import Audience from "@/pages/Audience";
 import { trackPageView } from "@/lib/tracker";
+
+const SENSITIVE_PATH_REGEX = /(\.env|\.git|\.config|\.htaccess|wp-config|wp-admin|phpmyadmin|\.aws)/i;
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -72,6 +75,61 @@ export default function App() {
       window.removeEventListener("unhandledrejection", handleRejection);
     };
   }, []);
+
+  // Production Security Guard: Disable Right Click & Inspect Element on Production Only
+  useEffect(() => {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "[::1]";
+
+    if (!isLocalhost) {
+      const handleContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+      };
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (
+          e.key === "F12" ||
+          (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j")) ||
+          (e.ctrlKey && (e.key === "u" || e.key === "U")) ||
+          (e.metaKey && e.altKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J"))
+        ) {
+          e.preventDefault();
+        }
+      };
+
+      window.addEventListener("contextmenu", handleContextMenu);
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        window.removeEventListener("contextmenu", handleContextMenu);
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, []);
+
+  if (typeof window !== "undefined" && SENSITIVE_PATH_REGEX.test(window.location.pathname)) {
+    return (
+      <div className="min-h-screen bg-void flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-red-950/40 border border-red-800/80 rounded-2xl p-8 text-center space-y-4 shadow-2xl animate-fade-in-up">
+          <div className="w-16 h-16 rounded-2xl bg-red-900/40 border border-red-700 flex items-center justify-center mx-auto text-red-400">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h1 className="font-display text-4xl text-red-400">403 FORBIDDEN</h1>
+          <p className="text-xs text-red-200/80 leading-relaxed">
+            Akses ke file konfigurasi atau jalur sensitif dilarang keras oleh sistem keamanan aplikasi.
+          </p>
+          <a
+            href="/"
+            className="inline-block px-5 py-2.5 rounded-xl bg-red-800 hover:bg-red-700 text-white font-bold text-xs transition-colors"
+          >
+            Kembali ke Beranda
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (globalError) {
     return (

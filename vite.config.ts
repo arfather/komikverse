@@ -16,6 +16,8 @@ async function encryptResponse(plaintext: string): Promise<string> {
   return sodium.to_base64(combined);
 }
 
+const SENSITIVE_PATH_REGEX = /(\.env|\.git|\.config|\.htaccess|wp-config|wp-admin|phpmyadmin|\.aws)/i;
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -31,6 +33,22 @@ export default defineConfig(({ mode }) => {
         configureServer(server) {
           server.middlewares.use(async (req, res, next) => {
             console.log(`[Vite Middleware] Intercepted: ${req.url}`);
+            
+            // Security Guard: Block direct access to .env and sensitive paths
+            if (req.url && SENSITIVE_PATH_REGEX.test(req.url)) {
+              console.warn(`[SECURITY ALERT] Blocked access to sensitive URL: ${req.url}`);
+              res.statusCode = 403;
+              res.setHeader("Content-Type", "application/json");
+              res.end(
+                JSON.stringify({
+                  status: 403,
+                  error: "Forbidden",
+                  message: "Direct access to environment and configuration files is strictly blocked.",
+                })
+              );
+              return;
+            }
+
             if (req.url && req.url.startsWith("/api/v1")) {
               try {
                 const targetPath = req.url.replace(/^\/api\/v1\//, "");
