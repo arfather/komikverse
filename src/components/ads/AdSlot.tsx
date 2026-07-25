@@ -116,14 +116,14 @@ export default function AdSlot({
 
   return (
     <div
-      className={`relative mx-auto my-3 overflow-hidden rounded-xl border border-border-subtle bg-raised/60 backdrop-blur-sm p-3 text-center transition-all hover:border-fire/30 ${sizeClasses} ${className}`}
+      className={`relative mx-auto my-3 overflow-auto rounded-xl border border-border-subtle bg-raised/60 backdrop-blur-sm p-3 text-center transition-all hover:border-fire/30 ${sizeClasses} ${className}`}
     >
-      <div className="absolute top-1.5 right-2 flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-text-muted/60 z-10">
+      <div className="absolute top-1.5 right-2 flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-text-muted/60 z-10 pointer-events-none">
         <Sparkles className="w-2.5 h-2.5 text-fire/70" />
         <span>Sponsor</span>
       </div>
 
-      <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto">
+      <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto max-w-full">
         {hasAdScript ? (
           <div className="text-xs text-text-muted animate-pulse">
             Memuat Iklan...

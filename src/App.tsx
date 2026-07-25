@@ -36,15 +36,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-void flex flex-col">
       <Navbar />
-      <div className="pt-16">
-        <AdSlot
-          position="header"
-          nativeBannerId={ADSTERRA_NATIVE_ID}
-          nativeScriptUrl={ADSTERRA_NATIVE_SCRIPT}
-          className="px-4"
-        />
-      </div>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-16">{children}</main>
       <AdSlot
         position="footer"
         nativeBannerId={ADSTERRA_NATIVE_ID}
