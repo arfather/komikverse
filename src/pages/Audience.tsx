@@ -47,7 +47,14 @@ export default function Audience() {
   );
 
   // Real Analytics & Adsterra States
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary>(getAnalyticsSummary());
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary>({
+    totalVisitors: 0,
+    totalPageviews: 0,
+    avgSessionDuration: "0m 0s",
+    bounceRate: 0,
+    deviceBreakdown: { mobilePercent: 0, desktopPercent: 0, mobileCount: 0, desktopCount: 0 },
+    hourlyViews: new Array(24).fill(0),
+  });
   const [adsterraKeyInput, setAdsterraKeyInput] = useState<string>(getAdsterraApiKey());
   const [adsterraStats, setAdsterraStats] = useState<AdsterraStats | null>(null);
   const [isSavingKey, setIsSavingKey] = useState<boolean>(false);
@@ -63,14 +70,16 @@ export default function Audience() {
 
   const loadRealStats = useCallback(async () => {
     setIsRefreshing(true);
-    const internalSummary = getAnalyticsSummary();
-    setAnalyticsData(internalSummary);
 
     const savedKey = getAdsterraApiKey();
+    let stats: AdsterraStats | null = null;
     if (savedKey) {
-      const stats = await fetchAdsterraStats(savedKey);
+      stats = await fetchAdsterraStats(savedKey);
       if (stats) setAdsterraStats(stats);
     }
+
+    const internalSummary = await getAnalyticsSummary(stats);
+    setAnalyticsData(internalSummary);
 
     setTimeout(() => {
       setLastRefreshed(
