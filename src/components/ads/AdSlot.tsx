@@ -3,6 +3,8 @@ import { ExternalLink, Sparkles } from "lucide-react";
 
 interface AdSlotProps {
   position?: "header" | "footer" | "sidebar" | "reader";
+  nativeBannerId?: string;
+  nativeScriptUrl?: string;
   adsterraKey?: string;
   scriptUrl?: string;
   adClient?: string;
@@ -18,6 +20,8 @@ interface AdSlotProps {
 
 export default function AdSlot({
   position = "header",
+  nativeBannerId,
+  nativeScriptUrl,
   adsterraKey,
   scriptUrl,
   adClient,
@@ -32,7 +36,24 @@ export default function AdSlot({
     const container = containerRef.current;
     container.innerHTML = "";
 
-    // Adsterra Banner Script Injection
+    // 1. Native Banner Injection (Adsterra Native Ads)
+    if (nativeBannerId && nativeScriptUrl) {
+      const targetDiv = document.createElement("div");
+      targetDiv.id = `container-${nativeBannerId}`;
+      container.appendChild(targetDiv);
+
+      const script = document.createElement("script");
+      script.src = nativeScriptUrl;
+      script.async = true;
+      script.setAttribute("data-cfasync", "false");
+      container.appendChild(script);
+
+      return () => {
+        container.innerHTML = "";
+      };
+    }
+
+    // 2. Adsterra iframe Banner Script Injection
     if (adsterraKey) {
       const isMobile = window.innerWidth < 768;
       const width = position === "sidebar" ? 300 : isMobile ? 320 : 728;
@@ -52,7 +73,7 @@ export default function AdSlot({
 
       const invokeScript = document.createElement("script");
       invokeScript.type = "text/javascript";
-      invokeScript.src = `//www.highperformanceformat.com/${adsterraKey}/invoke.js`;
+      invokeScript.src = `https://www.highperformanceformat.com/${adsterraKey}/invoke.js`;
       invokeScript.async = true;
 
       container.appendChild(confScript);
@@ -63,7 +84,7 @@ export default function AdSlot({
       };
     }
 
-    // Generic Third-Party Ad Script Injection
+    // 3. Generic Third-Party Ad Script Injection
     if (scriptUrl) {
       const script = document.createElement("script");
       script.src = scriptUrl;
@@ -78,7 +99,7 @@ export default function AdSlot({
         container.innerHTML = "";
       };
     }
-  }, [adsterraKey, scriptUrl, adClient, adSlotId, position]);
+  }, [nativeBannerId, nativeScriptUrl, adsterraKey, scriptUrl, adClient, adSlotId, position]);
 
   // Size styling based on position
   const sizeClasses =
@@ -86,7 +107,7 @@ export default function AdSlot({
       ? "w-full max-w-[300px] min-h-[250px]"
       : "w-full max-w-7xl min-h-[90px]";
 
-  const hasAdScript = Boolean(adsterraKey || scriptUrl);
+  const hasAdScript = Boolean(nativeBannerId || adsterraKey || scriptUrl);
 
   return (
     <div
@@ -150,4 +171,30 @@ export default function AdSlot({
       </div>
     </div>
   );
+}
+
+/**
+ * Komponen untuk memasang Popunder & Social Bar global di seluruh halaman website
+ */
+export function GlobalAdScripts() {
+  useEffect(() => {
+    // 1. Inject Social Bar Script
+    const socialBarScript = document.createElement("script");
+    socialBarScript.src = "https://pl30533659.effectivecpmnetwork.com/1c/bd/0f/1cbd0f706296e166c6e0247b5238a02d.js";
+    socialBarScript.async = true;
+    document.body.appendChild(socialBarScript);
+
+    // 2. Inject Popunder Script
+    const popunderScript = document.createElement("script");
+    popunderScript.src = "https://pl30533660.effectivecpmnetwork.com/a5/b9/f9/a5b9f916893db5c40822e9b39e43502a.js";
+    popunderScript.async = true;
+    document.body.appendChild(popunderScript);
+
+    return () => {
+      if (document.body.contains(socialBarScript)) document.body.removeChild(socialBarScript);
+      if (document.body.contains(popunderScript)) document.body.removeChild(popunderScript);
+    };
+  }, []);
+
+  return null;
 }

@@ -3,17 +3,20 @@ import { Routes, Route, useLocation, useNavigationType } from "react-router-dom"
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import Toast from "@/components/ui/Toast";
-import AdSlot from "@/components/ads/AdSlot";
+import AdSlot, { GlobalAdScripts } from "@/components/ads/AdSlot";
 import Home from "@/pages/Home";
 import ComicDetail from "@/pages/ComicDetail";
 import ChapterReader from "@/pages/ChapterReader";
 import Browse from "@/pages/Browse";
+import Audience from "@/pages/Audience";
+import { trackPageView } from "@/lib/tracker";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
   const navType = useNavigationType();
 
   useEffect(() => {
+    trackPageView(pathname);
     if (navType !== "POP") {
       window.scrollTo(0, 0);
     }
@@ -22,15 +25,28 @@ function ScrollToTop() {
   return null;
 }
 
+const ADSTERRA_NATIVE_ID = "46b09ded0328b767c450d184ed63a2bd";
+const ADSTERRA_NATIVE_SCRIPT = "https://pl30533662.effectivecpmnetwork.com/46b09ded0328b767c450d184ed63a2bd/invoke.js";
+
 function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-void flex flex-col">
       <Navbar />
       <div className="pt-16">
-        <AdSlot position="header" adsterraKey="5936357" className="px-4" />
+        <AdSlot
+          position="header"
+          nativeBannerId={ADSTERRA_NATIVE_ID}
+          nativeScriptUrl={ADSTERRA_NATIVE_SCRIPT}
+          className="px-4"
+        />
       </div>
       <main className="flex-1">{children}</main>
-      <AdSlot position="footer" adsterraKey="5936357" className="px-4" />
+      <AdSlot
+        position="footer"
+        nativeBannerId={ADSTERRA_NATIVE_ID}
+        nativeScriptUrl={ADSTERRA_NATIVE_SCRIPT}
+        className="px-4"
+      />
       <Footer />
       <Toast />
     </div>
@@ -73,6 +89,7 @@ export default function App() {
 
   return (
     <>
+      <GlobalAdScripts />
       <ScrollToTop />
       <Routes>
       <Route
@@ -97,6 +114,14 @@ export default function App() {
         element={
           <Layout>
             <Browse />
+          </Layout>
+        }
+      />
+      <Route
+        path="/audience"
+        element={
+          <Layout>
+            <Audience />
           </Layout>
         }
       />
