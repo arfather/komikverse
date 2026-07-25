@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Sparkles } from "lucide-react";
 
 interface AdSlotProps {
@@ -30,11 +30,13 @@ export default function AdSlot({
   className = "",
 }: AdSlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [scriptFailed, setScriptFailed] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
     container.innerHTML = "";
+    setScriptFailed(false);
 
     // 1. Native Banner Injection (Adsterra Native Ads)
     if (nativeBannerId && nativeScriptUrl) {
@@ -46,6 +48,7 @@ export default function AdSlot({
       script.src = nativeScriptUrl;
       script.async = true;
       script.setAttribute("data-cfasync", "false");
+      script.onerror = () => setScriptFailed(true);
       container.appendChild(script);
 
       return () => {
@@ -75,6 +78,7 @@ export default function AdSlot({
       invokeScript.type = "text/javascript";
       invokeScript.src = `https://www.highperformanceformat.com/${adsterraKey}/invoke.js`;
       invokeScript.async = true;
+      invokeScript.onerror = () => setScriptFailed(true);
 
       container.appendChild(confScript);
       container.appendChild(invokeScript);
@@ -90,6 +94,7 @@ export default function AdSlot({
       script.src = scriptUrl;
       script.async = true;
       script.setAttribute("crossorigin", "anonymous");
+      script.onerror = () => setScriptFailed(true);
       if (adClient) script.setAttribute("data-ad-client", adClient);
       if (adSlotId) script.setAttribute("data-ad-slot", adSlotId);
 
@@ -107,7 +112,7 @@ export default function AdSlot({
       ? "w-full max-w-[300px] min-h-[250px]"
       : "w-full max-w-7xl min-h-[90px]";
 
-  const hasAdScript = Boolean(nativeBannerId || adsterraKey || scriptUrl);
+  const hasAdScript = Boolean(nativeBannerId || adsterraKey || scriptUrl) && !scriptFailed;
 
   return (
     <div
