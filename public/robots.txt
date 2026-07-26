@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /comic/
+Allow: /browse
+
+# Internal / admin analytics endpoints
+Disallow: /audience
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://komikverse.app/sitemap.xml

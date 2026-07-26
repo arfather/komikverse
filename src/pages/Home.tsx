@@ -1,6 +1,7 @@
 import HeroBanner from "@/components/hero/HeroBanner";
 import ComicCard from "@/components/ui/ComicCard";
 import SkeletonCard from "@/components/ui/SkeletonCard";
+import SEO from "@/components/SEO";
 import { VALID_GENRES } from "@/lib/data";
 import { ChevronLeft, ChevronRight, Clock, TrendingUp } from "lucide-react";
 import { useCallback, useRef, useState, useEffect, useMemo } from "react";
@@ -83,8 +84,22 @@ export default function Home() {
     );
   }
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KomikVerse",
+    "url": "https://komikverse.app",
+    "description": "Platform tempat baca komik, manga, manhwa, dan manhua online Bahasa Indonesia gratis.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://komikverse.app/browse?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <div className="min-h-screen bg-void relative">
+      <SEO schema={websiteSchema} />
       {isLoading && (
         <div className="fixed top-16 left-0 right-0 h-1 bg-fire/20 z-50 overflow-hidden">
           <div className="h-[2px] bg-fire animate-pulse" style={{ width: "60%" }} />

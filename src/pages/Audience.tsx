@@ -23,6 +23,7 @@ import {
   setAdsterraApiKey,
   fetchAdsterraStats,
 } from "@/lib/tracker";
+import SEO from "@/components/SEO";
 import type { AnalyticsSummary, AdsterraStats } from "@/lib/tracker";
 
 // SHA-256 hash for password "guanteng"
@@ -162,6 +163,7 @@ export default function Audience() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+        <SEO title="Audience Dashboard" noindex={true} />
         <div className="w-full max-w-md bg-panel/80 backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-2xl relative overflow-hidden animate-fade-in-up">
           <div className="absolute top-0 right-0 p-8 w-32 h-32 bg-fire/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -233,6 +235,7 @@ export default function Audience() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
+      <SEO title="Analisa Audiens & Traffic" noindex={true} />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-panel/60 backdrop-blur-md border border-border-subtle rounded-2xl p-6">
         <div>

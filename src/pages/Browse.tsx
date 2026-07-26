@@ -17,6 +17,7 @@ import { useDebounce, useMediaQuery } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
 import ComicCard from "@/components/ui/ComicCard";
 import SkeletonCard from "@/components/ui/SkeletonCard";
+import SEO from "@/components/SEO";
 
 const SORT_OPTIONS = [
   { value: "popular", label: "Populer" },
@@ -242,8 +243,25 @@ export default function Browse() {
     setVisibleCount(24);
   }, [setSelectedGenres, setVisibleCount]);
 
+  const browseTitle = urlSearch
+    ? `Cari Komik "${urlSearch}" - KomikVerse`
+    : urlGenre
+    ? `Komik Genre ${urlGenre} Sub Indo - KomikVerse`
+    : "Jelajahi & Cari Komik Online Bahasa Indonesia - KomikVerse";
+
+  const browseDescription = urlSearch
+    ? `Hasil pencarian komik untuk "${urlSearch}". Baca manga, manhwa, dan manhua gratis di KomikVerse.`
+    : urlGenre
+    ? `Daftar komik dengan genre ${urlGenre} sub Indo terlengkap dan gratis di KomikVerse.`
+    : "Cari dan temukan ribuan komik, manga, manhwa, dan manhua Bahasa Indonesia terbaru gratis.";
+
   return (
     <div className="min-h-screen bg-void pt-20 pb-10">
+      <SEO
+        title={browseTitle}
+        description={browseDescription}
+        keywords="daftar komik, cari manga, genre komik, manhwa indonesia, manhua sub indo"
+      />
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">

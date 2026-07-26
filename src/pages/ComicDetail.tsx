@@ -18,6 +18,7 @@ import { sanitizeSlug } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
 import StarRating from "@/components/ui/StarRating";
 import ComicCard from "@/components/ui/ComicCard";
+import SEO from "@/components/SEO";
 
 const isNew = (date: string) => {
   return new Date(date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -150,8 +151,63 @@ export default function ComicDetail() {
   const firstChapter = chaptersList[chaptersList.length - 1]?.number || 1;
   const latestChapter = chaptersList[0]?.number || 1;
 
+  const comicSchema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Book",
+      "name": comic.title,
+      "alternateName": comic.altTitle,
+      "author": {
+        "@type": "Person",
+        "name": comic.author || "Unknown",
+      },
+      "genre": comic.genres,
+      "description": comic.synopsis,
+      "image": comic.coverUrl,
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": comic.rating,
+        "bestRating": "10",
+        "worstRating": "1",
+        "ratingCount": comic.totalVotes || 100,
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Beranda",
+          "item": "https://komikverse.app/",
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Komik",
+          "item": "https://komikverse.app/browse",
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": comic.title,
+          "item": `https://komikverse.app/comic/${comic.slug}`,
+        },
+      ],
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-void pt-16">
+      <SEO
+        title={`Baca Komik ${comic.title} Bahasa Indonesia`}
+        description={`Baca komik ${comic.title} (${comic.altTitle}) Bahasa Indonesia gratis. ${comic.synopsis ? comic.synopsis.slice(0, 150) + "..." : ""}`}
+        keywords={`baca ${comic.title}, komik ${comic.title}, ${comic.title} sub indo, komik ${comic.genres.join(", ")}`}
+        image={comic.coverUrl}
+        type="book"
+        schema={comicSchema}
+      />
       {isLoading && (
         <div className="fixed top-16 left-0 right-0 h-1 bg-fire/20 z-50 overflow-hidden">
           <div className="h-[2px] bg-fire animate-pulse" style={{ width: "60%" }} />

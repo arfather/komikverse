@@ -16,6 +16,7 @@ import { useStore } from "@/lib/store";
 import ReaderToolbar from "@/components/reader/ReaderToolbar";
 import VerticalReader from "@/components/reader/VerticalReader";
 import PageReader from "@/components/reader/PageReader";
+import SEO from "@/components/SEO";
 
 export default function ChapterReader() {
   const { slug, chapter } = useParams<{ slug: string; chapter: string }>();
@@ -142,10 +143,57 @@ export default function ChapterReader() {
     white: "bg-[#f0f0f0]",
   };
 
+  const chapterSchema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "ComicIssue",
+      "name": `${comic.title} Chapter ${validChapter}`,
+      "issueNumber": String(validChapter),
+      "isPartOf": {
+        "@type": "Book",
+        "name": comic.title,
+        "url": `https://komikverse.app/comic/${comic.slug}`,
+      },
+      "image": comic.coverUrl,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Beranda",
+          "item": "https://komikverse.app/",
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": comic.title,
+          "item": `https://komikverse.app/comic/${comic.slug}`,
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": `Chapter ${validChapter}`,
+          "item": `https://komikverse.app/comic/${comic.slug}/${validChapter}`,
+        },
+      ],
+    },
+  ];
+
   return (
     <div
       className={`min-h-screen ${bgClasses[readerSettings.bgColor]} relative overflow-x-hidden`}
     >
+      <SEO
+        title={`Baca Komik ${comic.title} Chapter ${validChapter} Sub Indo`}
+        description={`Baca Komik ${comic.title} Chapter ${validChapter} Bahasa Indonesia gratis di KomikVerse. Update terbaru, gambar jernih, dan tanpa iklan mengganggu.`}
+        keywords={`baca ${comic.title} chapter ${validChapter}, ${comic.title} ch ${validChapter} sub indo, komik ${comic.title} ${validChapter}`}
+        image={comic.coverUrl}
+        type="article"
+        schema={chapterSchema}
+      />
       {/* Brightness overlay */}
       {readerSettings.brightness > 0 && (
         <div
