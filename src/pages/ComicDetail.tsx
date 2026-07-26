@@ -21,7 +21,29 @@ import ComicCard from "@/components/ui/ComicCard";
 import SEO from "@/components/SEO";
 
 const isNew = (date: string) => {
-  return new Date(date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  if (!date) return false;
+  const d = new Date(date);
+  return !isNaN(d.getTime()) && d > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+};
+
+const formatChapterDate = (dateStr?: string) => {
+  if (!dateStr) return "Baru saja";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Hari ini";
+  if (diffDays === 1) return "Kemarin";
+  if (diffDays < 7) return `${diffDays} hari lalu`;
+
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 export default function ComicDetail() {
@@ -272,7 +294,7 @@ export default function ComicDetail() {
                 </span>
                 <span className="text-sm text-text-muted flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  Update: {new Date(comic.updatedAt).toLocaleDateString("id-ID")}
+                  Update: {formatChapterDate(comic.updatedAt)}
                 </span>
               </div>
 
@@ -457,16 +479,19 @@ export default function ComicDetail() {
                         Ch. {ch.number}
                       </span>
                       <span className={`flex-1 text-sm truncate transition-colors ${
-                        hasBeenRead ? "text-text-muted/60" : "text-warm-white"
+                        hasBeenRead ? "text-text-muted/60" : "text-warm-white font-medium"
                       }`}>
                         {ch.title}
                       </span>
-                      <span className="text-xs text-text-muted hidden sm:block">
-                        {new Date(ch.date).toLocaleDateString("id-ID")}
+                      <span className="text-xs text-text-muted/80 flex items-center gap-1 shrink-0 font-sans">
+                        <Clock className="w-3 h-3 text-fire/70" />
+                        {formatChapterDate(ch.date)}
                       </span>
-                      <span className="text-xs text-text-muted hidden md:block">
-                        {ch.views}
-                      </span>
+                      {ch.views && ch.views !== "0" && (
+                        <span className="text-xs text-text-muted hidden md:block">
+                          {ch.views}
+                        </span>
+                      )}
                       {isNew(ch.date) && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-fire/20 text-fire font-semibold">
                           NEW
