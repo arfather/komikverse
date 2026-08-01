@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="bg-panel border-t border-border-subtle mt-16">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -27,33 +27,21 @@ export default function Footer() {
               TENTANG
             </h3>
             <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/donation"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-fire hover:text-fire-light transition-colors"
+                >
+                  <Heart className="w-4 h-4 fill-fire" />
+                  Dukungan & Donasi
+                </Link>
+              </li>
               {["Tentang Kami", "Kebijakan Privasi", "Syarat Layanan", "FAQ"].map(
                 (item) => (
                   <li key={item}>
                     <span className="text-sm text-text-muted hover:text-fire transition-colors cursor-pointer">
                       {item}
                     </span>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
-
-          {/* Genres */}
-          <div>
-            <h3 className="font-display text-lg tracking-wide text-warm-white mb-4">
-              GENRE POPULER
-            </h3>
-            <ul className="space-y-2">
-              {["Action", "Romance", "Fantasy", "Horror", "Slice of Life"].map(
-                (item) => (
-                  <li key={item}>
-                    <Link
-                      to={`/browse?genre=${item}`}
-                      className="text-sm text-text-muted hover:text-fire transition-colors"
-                    >
-                      {item}
-                    </Link>
                   </li>
                 )
               )}
