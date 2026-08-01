@@ -139,34 +139,6 @@ export default function ComicDetail() {
     .filter((c) => c.id !== comic.id && c.genres.some((g) => comic.genres.includes(g)))
     .slice(0, 6);
 
-  // Mock comments
-  const comments = [
-    {
-      id: 1,
-      user: "ComicLover99",
-      avatar: "CL",
-      time: "2 jam yang lalu",
-      text: "Chapter terbaru sangat seru! Plot twistnya tidak terduga.",
-      likes: 24,
-    },
-    {
-      id: 2,
-      user: "MangaReader",
-      avatar: "MR",
-      time: "5 jam yang lalu",
-      text: "Gambarnya makin bagus aja, art improvementnya kelihatan banget.",
-      likes: 18,
-    },
-    {
-      id: 3,
-      user: "WebtoonFan",
-      avatar: "WF",
-      time: "1 hari yang lalu",
-      text: "Karakter developmentnya mantap! Tidak sabar nunggu chapter selanjutnya.",
-      likes: 32,
-    },
-  ];
-
   const chaptersList = comic.chapters || [];
   const firstChapter = chaptersList[chaptersList.length - 1]?.number || 1;
   const latestChapter = chaptersList[0]?.number || 1;

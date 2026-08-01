@@ -11,7 +11,6 @@ import {
   Zap,
   Sparkles,
   ArrowLeft,
-  QrCode,
   CreditCard,
   Smartphone,
   Clock,

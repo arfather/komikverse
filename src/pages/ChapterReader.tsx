@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Type,
-  Monitor,
   BookOpen,
   Sun,
   Moon,

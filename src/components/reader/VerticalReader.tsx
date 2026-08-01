@@ -11,7 +11,6 @@ interface VerticalReaderProps {
 export default function VerticalReader({ comic, chapter, onAllLoaded }: VerticalReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
-  const [maxLoadedBuffer, setMaxLoadedBuffer] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [showIndicator, setShowIndicator] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,7 +19,6 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
   useEffect(() => {
     Promise.resolve().then(() => {
       setLoadedPages(new Set());
-      setMaxLoadedBuffer(5);
       setCurrentPage(1);
       setShowIndicator(true);
       onAllLoaded?.(false);
@@ -96,8 +94,6 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
       }
       return next;
     });
-    // Auto-advance buffer so downloading continues automatically in background even without scrolling
-    setMaxLoadedBuffer((prev) => Math.max(prev, index + 4));
   }, [pages.length, onAllLoaded]);
 
   return (

@@ -38,7 +38,7 @@ export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderPr
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
+  const [, setLoadedPages] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     Promise.resolve().then(() => {
