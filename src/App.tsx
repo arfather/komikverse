@@ -3,7 +3,7 @@ import { Routes, Route, useLocation, useNavigationType } from "react-router-dom"
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import Toast from "@/components/ui/Toast";
-import AdSlot, { GlobalAdScripts } from "@/components/ads/AdSlot";
+// import AdSlot, { GlobalAdScripts } from "@/components/ads/AdSlot";
 import Home from "@/pages/Home";
 import ComicDetail from "@/pages/ComicDetail";
 import ChapterReader from "@/pages/ChapterReader";
@@ -30,20 +30,20 @@ function ScrollToTop() {
   return null;
 }
 
-const ADSTERRA_NATIVE_ID = "46b09ded0328b767c450d184ed63a2bd";
-const ADSTERRA_NATIVE_SCRIPT = "https://pl30533662.effectivecpmnetwork.com/46b09ded0328b767c450d184ed63a2bd/invoke.js";
+// const ADSTERRA_NATIVE_ID = "46b09ded0328b767c450d184ed63a2bd";
+// const ADSTERRA_NATIVE_SCRIPT = "https://pl30533662.effectivecpmnetwork.com/46b09ded0328b767c450d184ed63a2bd/invoke.js";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-void flex flex-col">
       <Navbar />
       <main className="flex-1 pt-16">{children}</main>
-      <AdSlot
+      {/* <AdSlot
         position="footer"
         nativeBannerId={ADSTERRA_NATIVE_ID}
         nativeScriptUrl={ADSTERRA_NATIVE_SCRIPT}
         className="px-4"
-      />
+      /> */}
       <Footer />
       <Toast />
     </div>
@@ -143,7 +143,7 @@ export default function App() {
   return (
     <>
       <Analytics />
-      <GlobalAdScripts />
+      {/* <GlobalAdScripts /> */}
       <ScrollToTop />
       <Routes>
       <Route
