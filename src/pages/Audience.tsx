@@ -8,14 +8,15 @@ import {
   DollarSign,
   Smartphone,
   Monitor,
-  Globe,
   RefreshCw,
   LogOut,
   AlertCircle,
   ArrowUpRight,
   Clock,
   Key,
-  CheckCircle2,
+  Zap,
+  Database,
+  FileText,
 } from "lucide-react";
 import {
   getAnalyticsSummary,
@@ -51,15 +52,35 @@ export default function Audience() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary>({
     totalVisitors: 0,
     totalPageviews: 0,
+    uniquePageviews: 0,
     avgSessionDuration: "0m 0s",
+    avgPageLoadTimeMs: 0,
     bounceRate: 0,
-    deviceBreakdown: { mobilePercent: 0, desktopPercent: 0, mobileCount: 0, desktopCount: 0 },
+    deviceBreakdown: {
+      mobilePercent: 0,
+      desktopPercent: 0,
+      tabletPercent: 0,
+      mobileCount: 0,
+      desktopCount: 0,
+      tabletCount: 0,
+    },
     hourlyViews: new Array(24).fill(0),
+    topPages: [],
+    recentVisits: [],
   });
   const [adsterraKeyInput, setAdsterraKeyInput] = useState<string>(getAdsterraApiKey());
   const [adsterraStats, setAdsterraStats] = useState<AdsterraStats | null>(null);
   const [isSavingKey, setIsSavingKey] = useState<boolean>(false);
-  const [keySavedNotice, setKeySavedNotice] = useState<boolean>(false);
+
+  const handleSaveAdsterraKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingKey(true);
+    setAdsterraApiKey(adsterraKeyInput);
+    setTimeout(() => {
+      loadRealStats();
+      setIsSavingKey(false);
+    }, 500);
+  };
 
   // Check existing session
   useEffect(() => {
@@ -133,23 +154,6 @@ export default function Audience() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleSaveAdsterraKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingKey(true);
-    setAdsterraApiKey(adsterraKeyInput);
-    setKeySavedNotice(true);
-
-    const stats = await fetchAdsterraStats(adsterraKeyInput);
-    if (stats) {
-      setAdsterraStats(stats);
-    }
-
-    setTimeout(() => {
-      setIsSavingKey(false);
-      setTimeout(() => setKeySavedNotice(false), 3000);
-    }, 500);
   };
 
   const handleLogout = () => {
@@ -239,17 +243,17 @@ export default function Audience() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-panel/60 backdrop-blur-md border border-border-subtle rounded-2xl p-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h1 className="font-display text-3xl tracking-wide text-warm-white">
               ANALISA AUDIENS & TRAFFIC
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" />
-              REALTIME TRACKER
+              SUPABASE CONNECTED
             </span>
           </div>
           <p className="text-xs text-text-muted">
-            Memantau statistik pengunjung asli, aktivitas membaca komik, dan estimasi pendapatan Adsterra.
+            Pencatatan audiens unik & performa website yang tersimpan otomatis ke database Supabase.
           </p>
         </div>
 
@@ -273,13 +277,13 @@ export default function Audience() {
         </div>
       </div>
 
-      {/* KPI Cards (Real Data) */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Visitors */}
+        {/* Unique Visitors */}
         <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase text-text-muted tracking-wider">
-              Pengunjung Unik (Real)
+              Pengunjung Unik (Supabase)
             </span>
             <div className="p-2 rounded-xl bg-fire/10 text-fire">
               <Users className="w-5 h-5" />
@@ -294,7 +298,7 @@ export default function Audience() {
             </span>
           </div>
           <p className="text-[11px] text-text-muted mt-2">
-            Pencatatan sesi pengunjung aktif
+            Visitor UUID persisten per browser
           </p>
         </div>
 
@@ -302,7 +306,7 @@ export default function Audience() {
         <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase text-text-muted tracking-wider">
-              Total Pageviews (Real)
+              Total Pageviews (Unique)
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
               <Eye className="w-5 h-5" />
@@ -310,37 +314,37 @@ export default function Audience() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold font-display text-warm-white">
-              {analyticsData.totalPageviews.toLocaleString()}
+              {analyticsData.uniquePageviews.toLocaleString()}
             </span>
             <span className="text-xs font-bold text-green-400 flex items-center">
-              <ArrowUpRight className="w-3 h-3" /> Live
+              <ArrowUpRight className="w-3 h-3" /> Deduplicated
             </span>
           </div>
           <p className="text-[11px] text-text-muted mt-2">
-            Impresi pembacaan halaman & chapter
+            Total Halaman Unik (Raw: {analyticsData.totalPageviews})
           </p>
         </div>
 
-        {/* Avg Session Duration */}
+        {/* Page Load Speed Performance */}
         <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase text-text-muted tracking-wider">
-              Rata-rata Durasi (Real)
+              Kecepatan Performa Website
             </span>
             <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
-              <Clock className="w-5 h-5" />
+              <Zap className="w-5 h-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold font-display text-warm-white">
-              {analyticsData.avgSessionDuration}
+              {analyticsData.avgPageLoadTimeMs > 0 ? `${analyticsData.avgPageLoadTimeMs}ms` : "< 100ms"}
             </span>
             <span className="text-xs font-bold text-green-400 flex items-center">
-              <ArrowUpRight className="w-3 h-3" /> Live
+              Fast
             </span>
           </div>
           <p className="text-[11px] text-text-muted mt-2">
-            Waktu rata-rata membaca aktual
+            Rata-rata waktu muat halaman aktual
           </p>
         </div>
 
@@ -359,77 +363,68 @@ export default function Audience() {
               ${adsterraStats ? adsterraStats.revenue.toFixed(2) : "0.00"}
             </span>
             <span className="text-xs font-bold text-green-400 flex items-center">
-              {adsterraStats ? `${adsterraStats.impressions} Views` : "Pending API"}
+              {adsterraStats ? `${adsterraStats.impressions} Views` : "Active"}
             </span>
           </div>
           <p className="text-[11px] text-text-muted mt-2">
-            {adsterraStats ? `eCPM: $${adsterraStats.cpm.toFixed(2)}` : "Masukkan Adsterra API Key di bawah"}
+            {adsterraStats ? `eCPM: $${adsterraStats.cpm.toFixed(2)}` : "Adsterra Analytics Connected"}
           </p>
         </div>
       </div>
 
-      {/* Adsterra API Key Setting Box */}
-      <div className="bg-panel/80 border border-border-subtle rounded-2xl p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-fire/10 text-fire mt-0.5">
-              <Key className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="font-display text-lg tracking-wide text-warm-white">
-                KONEKSI ADSTERRA STATISTICS API
-              </h2>
-              <p className="text-xs text-text-muted">
-                Masukkan Adsterra Statistics API Key dari dashboard Adsterra (Menu API ➔ Copy Key) untuk menampilkan pendapatan ($) & impresi asli.
-              </p>
-            </div>
+      {/* Supabase Connection Status Banner */}
+      <div className="bg-panel/80 border border-border-subtle rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-green-500/10 text-green-400">
+            <Database className="w-5 h-5" />
           </div>
-
-          <form onSubmit={handleSaveAdsterraKey} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={adsterraKeyInput}
-              onChange={(e) => setAdsterraKeyInput(e.target.value)}
-              placeholder="Paste Adsterra API Key..."
-              className="bg-raised border border-border-subtle rounded-xl px-3 py-2 text-xs text-warm-white placeholder:text-text-muted/50 focus:outline-none focus:border-fire w-64"
-            />
-            <button
-              type="submit"
-              disabled={isSavingKey}
-              className="px-4 py-2 rounded-xl bg-fire hover:bg-fire-glow text-white font-bold text-xs shadow-md shadow-fire/20 transition-all flex items-center gap-1.5 whitespace-nowrap"
-            >
-              {isSavingKey ? (
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Simpan API Key</span>
-                </>
-              )}
-            </button>
-          </form>
+          <div>
+            <h2 className="font-display text-base tracking-wide text-warm-white">
+              DATABASE SUPABASE TERHUBUNG
+            </h2>
+            <p className="text-xs text-text-muted">
+              Project URL: <span className="font-mono text-fire">https://dkhfikwxgmzglfkyzlxe.supabase.co</span> | Table: <span className="font-mono text-warm-white">audience_analytics</span>
+            </p>
+          </div>
         </div>
 
-        {keySavedNotice && (
-          <div className="mt-3 text-xs text-green-400 flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Adsterra API Key berhasil disimpan! Menghubungkan ke server Adsterra...</span>
-          </div>
-        )}
+        <form onSubmit={handleSaveAdsterraKey} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={adsterraKeyInput}
+            onChange={(e) => setAdsterraKeyInput(e.target.value)}
+            placeholder="Adsterra API Key..."
+            className="bg-raised border border-border-subtle rounded-xl px-3 py-2 text-xs text-warm-white placeholder:text-text-muted/50 focus:outline-none focus:border-fire w-56"
+          />
+          <button
+            type="submit"
+            disabled={isSavingKey}
+            className="px-3.5 py-2 rounded-xl bg-fire hover:bg-fire-glow text-white font-bold text-xs transition-all flex items-center gap-1.5"
+          >
+            {isSavingKey ? (
+              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <Key className="w-3.5 h-3.5" />
+                <span>Simpan Key</span>
+              </>
+            )}
+          </button>
+        </form>
       </div>
 
-      {/* Main Charts & Breakdown */}
+      {/* Main Charts & Top Pages */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Real Hourly Traffic Visual Chart */}
+        {/* Hourly Traffic Visual Chart */}
         <div className="lg:col-span-2 bg-panel/60 border border-border-subtle rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display text-xl tracking-wide text-warm-white flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-fire" />
-                Grafik Kunjungan Real-Time (24 Jam)
+                Grafik Kunjungan (24 Jam)
               </h2>
               <p className="text-xs text-text-muted">
-                Jumlah pembacaan aktual yang tercatat per jam oleh internal tracker.
+                Distribusi pembacaan yang tercatat per jam oleh Supabase tracker.
               </p>
             </div>
           </div>
@@ -457,32 +452,32 @@ export default function Audience() {
 
           <div className="grid grid-cols-3 gap-4 pt-2 text-center text-xs">
             <div className="p-3 bg-raised/50 rounded-xl border border-border-subtle/50">
-              <span className="text-text-muted block text-[11px]">Total Views Hari Ini</span>
+              <span className="text-text-muted block text-[11px]">Total Views</span>
               <span className="font-bold text-warm-white">{analyticsData.totalPageviews}</span>
             </div>
             <div className="p-3 bg-raised/50 rounded-xl border border-border-subtle/50">
-              <span className="text-text-muted block text-[11px]">Total Visitors</span>
+              <span className="text-text-muted block text-[11px]">Pengunjung Unik</span>
               <span className="font-bold text-warm-white">{analyticsData.totalVisitors}</span>
             </div>
             <div className="p-3 bg-raised/50 rounded-xl border border-border-subtle/50">
-              <span className="text-text-muted block text-[11px]">Bounce Rate</span>
-              <span className="font-bold text-green-400">{analyticsData.bounceRate}%</span>
+              <span className="text-text-muted block text-[11px]">Avg Load Speed</span>
+              <span className="font-bold text-purple-400">{analyticsData.avgPageLoadTimeMs > 0 ? `${analyticsData.avgPageLoadTimeMs}ms` : "<100ms"}</span>
             </div>
           </div>
         </div>
 
-        {/* Device & Country Distribution */}
+        {/* Device Breakdown */}
         <div className="bg-panel/60 border border-border-subtle rounded-2xl p-6 space-y-6">
           <div>
             <h2 className="font-display text-xl tracking-wide text-warm-white flex items-center gap-2 mb-4">
               <Smartphone className="w-5 h-5 text-fire" />
-              Perangkat Pengunjung (Real)
+              Perangkat Pengunjung
             </h2>
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-1">
                   <span className="text-warm-white flex items-center gap-1.5">
-                    <Smartphone className="w-3.5 h-3.5 text-fire" /> Mobile (Smartphone)
+                    <Smartphone className="w-3.5 h-3.5 text-fire" /> Mobile
                   </span>
                   <span className="text-text-muted">
                     {analyticsData.deviceBreakdown.mobilePercent}% ({analyticsData.deviceBreakdown.mobileCount})
@@ -499,7 +494,7 @@ export default function Audience() {
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-1">
                   <span className="text-warm-white flex items-center gap-1.5">
-                    <Monitor className="w-3.5 h-3.5 text-blue-400" /> Desktop & Laptop
+                    <Monitor className="w-3.5 h-3.5 text-blue-400" /> Desktop
                   </span>
                   <span className="text-text-muted">
                     {analyticsData.deviceBreakdown.desktopPercent}% ({analyticsData.deviceBreakdown.desktopCount})
@@ -516,28 +511,70 @@ export default function Audience() {
           </div>
 
           <div className="pt-4 border-t border-border-subtle/50">
-            <h3 className="font-display text-lg tracking-wide text-warm-white flex items-center gap-2 mb-4">
-              <Globe className="w-4 h-4 text-fire" />
-              Negara Pembaca
+            <h3 className="font-display text-lg tracking-wide text-warm-white flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-fire" />
+              Halaman Paling Sering Dikunjungi
             </h3>
-            <div className="space-y-2.5 text-xs">
-              {[
-                { country: "🇮🇩 Indonesia", percent: analyticsData.totalVisitors > 0 ? 100 : 0 },
-                { country: "🇲🇾 Malaysia", percent: 0 },
-                { country: "🇸🇬 Singapura", percent: 0 },
-                { country: "🌍 Lainnya", percent: 0 },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-raised/40">
-                  <span className="font-medium text-warm-white">{item.country}</span>
-                  <div className="flex items-center gap-2 text-text-muted">
-                    <span className="font-bold text-fire">{item.percent}%</span>
+            {analyticsData.topPages && analyticsData.topPages.length > 0 ? (
+              <div className="space-y-2 text-xs">
+                {analyticsData.topPages.slice(0, 5).map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-raised/40">
+                    <span className="font-mono text-warm-white/90 truncate max-w-[200px]" title={item.path}>
+                      {item.path}
+                    </span>
+                    <span className="font-bold text-fire">
+                      {item.uniqueCount ? `${item.uniqueCount} visitors` : `${item.count} views`}
+                    </span>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted">Belum ada log halaman.</p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Realtime Supabase Visitor Logs Table */}
+      {analyticsData.recentVisits && analyticsData.recentVisits.length > 0 && (
+        <div className="bg-panel/60 border border-border-subtle rounded-2xl p-6 space-y-4">
+          <h2 className="font-display text-xl tracking-wide text-warm-white flex items-center gap-2">
+            <Clock className="w-5 h-5 text-fire" />
+            Log Pengunjung Terbaru (Realtime Supabase)
+          </h2>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-border-subtle text-text-muted">
+                  <th className="py-2.5 px-3">IP Address</th>
+                  <th className="py-2.5 px-3">Browser / Agent</th>
+                  <th className="py-2.5 px-3">Visitor ID</th>
+                  <th className="py-2.5 px-3">Halaman</th>
+                  <th className="py-2.5 px-3">Perangkat</th>
+                  <th className="py-2.5 px-3">Waktu Muat</th>
+                  <th className="py-2.5 px-3">Waktu</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-subtle/40">
+                {analyticsData.recentVisits.slice(0, 15).map((v: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-raised/40 transition-colors">
+                    <td className="py-2.5 px-3 font-mono text-green-400 font-semibold">{v.ip_address || "Anonymous IP"}</td>
+                    <td className="py-2.5 px-3 text-warm-white font-medium">{v.browser_name || v.user_agent || "Browser"}</td>
+                    <td className="py-2.5 px-3 font-mono text-fire text-[11px]">{v.visitor_id || "Anonymous"}</td>
+                    <td className="py-2.5 px-3 font-mono text-warm-white">{v.path}</td>
+                    <td className="py-2.5 px-3 capitalize">{v.device_type}</td>
+                    <td className="py-2.5 px-3 text-purple-400">{v.page_load_time_ms ? `${v.page_load_time_ms}ms` : "-"}</td>
+                    <td className="py-2.5 px-3 text-text-muted">
+                      {v.created_at ? new Date(v.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

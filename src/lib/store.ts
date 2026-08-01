@@ -26,6 +26,16 @@ interface Toast {
   variant: "success" | "info" | "warning";
 }
 
+export interface FetchBrowseOptions {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  genres?: string[];
+  status?: string | null;
+  type?: string | null;
+  sortBy?: string;
+}
+
 interface AppState {
   // State
   bookmarks: Set<string>;
@@ -46,6 +56,9 @@ interface AppState {
   searchResults: Comic[];
   isLoadingSearch: boolean;
   searchError: string | null;
+  browseComics: Comic[];
+  isLoadingBrowse: boolean;
+  browseError: string | null;
   readChapters: Record<string, number[]>;
 
   // Actions
@@ -69,6 +82,7 @@ interface AppState {
   fetchHomepageComics: (genre?: string) => Promise<Comic[]>;
   fetchGenres: () => Promise<string[]>;
   searchComics: (query: string) => Promise<Comic[]>;
+  fetchBrowseComics: (options?: FetchBrowseOptions) => Promise<Comic[]>;
 }
 
 const createSet = <T>(arr: T[]): Set<T> => new Set(arr);
@@ -103,6 +117,9 @@ export const useStore = create<AppState>()(
       searchResults: [],
       isLoadingSearch: false,
       searchError: null,
+      browseComics: [],
+      isLoadingBrowse: false,
+      browseError: null,
 
       // Actions
       toggleBookmark: (comicId: string) => {
@@ -478,6 +495,67 @@ export const useStore = create<AppState>()(
             searchError: errorMessage,
             isLoadingSearch: false,
             searchResults: [],
+          });
+          return [];
+        }
+      },
+
+      fetchBrowseComics: async (options: FetchBrowseOptions = {}) => {
+        set({ isLoadingBrowse: true, browseError: null });
+        try {
+          const page = options.page || 1;
+          const pageSize = options.pageSize || 36;
+          let url = `/api/v1/manga/list?page=${page}&page_size=${pageSize}`;
+
+          if (options.search?.trim()) {
+            url += `&q=${encodeURIComponent(options.search.trim())}`;
+          } else {
+            if (options.genres && options.genres.length > 0) {
+              const formatted = options.genres
+                .map((g) => g.trim().toLowerCase())
+                .filter(Boolean)
+                .join(",");
+              if (formatted) {
+                url += `&genre_include=${encodeURIComponent(formatted)}&genre_include_mode=or`;
+              }
+            }
+
+            if (options.sortBy === "popular") {
+              url += `&sort=popular&sort_order=desc`;
+            } else {
+              url += `&is_update=true&sort=latest&sort_order=desc`;
+            }
+          }
+
+          const json = await fetchEncrypted(url);
+          if (json.retcode !== 0 || !json.data) {
+            throw new Error(json.message || "Failed to fetch browse data");
+          }
+
+          const mapped = mapApiMangaListToComics(json.data);
+
+          set((state) => {
+            const updatedLoaded = { ...state.loadedComics };
+            mapped.forEach((c) => {
+              const existing = updatedLoaded[c.slug];
+              if (!existing || !existing.isFullyLoaded) {
+                updatedLoaded[c.slug] = c;
+              }
+            });
+            return {
+              browseComics: mapped,
+              loadedComics: updatedLoaded,
+              isLoadingBrowse: false,
+            };
+          });
+
+          return mapped;
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Failed to fetch browse data";
+          console.error("Error fetching browse data:", err);
+          set({
+            browseError: errorMessage,
+            isLoadingBrowse: false,
           });
           return [];
         }
