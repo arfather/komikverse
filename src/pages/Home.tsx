@@ -2,6 +2,7 @@ import HeroBanner from "@/components/hero/HeroBanner";
 import ComicCard from "@/components/ui/ComicCard";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import SEO from "@/components/SEO";
+import DonationModal from "@/components/modals/DonationModal";
 import { VALID_GENRES } from "@/lib/data";
 import { ChevronLeft, ChevronRight, Clock, TrendingUp } from "lucide-react";
 import { useCallback, useRef, useState, useEffect, useMemo } from "react";
@@ -11,13 +12,28 @@ export default function Home() {
   const homepageComics = useStore((s) => s.homepageComics);
   const fetchHomepageComics = useStore((s) => s.fetchHomepageComics);
   const isLoading = useStore((s) => s.isLoadingHomepage);
+  const apiGenres = useStore((s) => s.genres);
+  const fetchGenres = useStore((s) => s.fetchGenres);
 
   useEffect(() => {
     fetchHomepageComics();
-  }, [fetchHomepageComics]);
+    fetchGenres();
+  }, [fetchHomepageComics, fetchGenres]);
+
+  const displayGenres = useMemo(() => {
+    return apiGenres && apiGenres.length > 0 ? apiGenres : (VALID_GENRES as unknown as string[]);
+  }, [apiGenres]);
 
   const [activeGenre, setActiveGenre] = useState<string>("Semua");
   const popularScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleGenreClick = useCallback(
+    (genre: string) => {
+      setActiveGenre(genre);
+      fetchHomepageComics(genre);
+    },
+    [fetchHomepageComics]
+  );
 
   const newest = homepageComics;
   const popular = useMemo(() => {
@@ -29,10 +45,7 @@ export default function Home() {
     return list.length > 0 ? list : homepageComics.slice(0, 5);
   }, [homepageComics]);
 
-  const filteredByGenre = useMemo(() => {
-    if (activeGenre === "Semua") return newest;
-    return newest.filter((c) => c.genres.includes(activeGenre));
-  }, [newest, activeGenre]);
+  const filteredByGenre = newest;
 
   const scrollPopular = useCallback((dir: "left" | "right") => {
     if (popularScrollRef.current) {
@@ -112,7 +125,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 mt-8">
         <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2">
           <button
-            onClick={() => setActiveGenre("Semua")}
+            onClick={() => handleGenreClick("Semua")}
             className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
               activeGenre === "Semua"
                 ? "bg-gradient-fire text-white shadow-bloom"
@@ -121,10 +134,10 @@ export default function Home() {
           >
             Semua
           </button>
-          {VALID_GENRES.slice(0, 11).map((genre) => (
+          {displayGenres.map((genre) => (
             <button
               key={genre}
-              onClick={() => setActiveGenre(genre)}
+              onClick={() => handleGenreClick(genre)}
               className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
                 activeGenre === genre
                   ? "bg-gradient-fire text-white shadow-bloom"
@@ -189,6 +202,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <DonationModal />
     </div>
   );
 }

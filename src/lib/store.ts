@@ -38,6 +38,8 @@ interface AppState {
   loadedComics: Record<string, Comic>;
   isLoadingComic: boolean;
   comicError: string | null;
+  genres: string[];
+  isLoadingGenres: boolean;
   homepageComics: Comic[];
   isLoadingHomepage: boolean;
   homepageError: string | null;
@@ -64,7 +66,8 @@ interface AppState {
   addToast: (message: string, variant?: "success" | "info" | "warning") => void;
   removeToast: (id: string) => void;
   fetchComic: (slug: string) => Promise<Comic | null>;
-  fetchHomepageComics: () => Promise<Comic[]>;
+  fetchHomepageComics: (genre?: string) => Promise<Comic[]>;
+  fetchGenres: () => Promise<string[]>;
   searchComics: (query: string) => Promise<Comic[]>;
 }
 
@@ -92,6 +95,8 @@ export const useStore = create<AppState>()(
       readChapters: {},
       isLoadingComic: false,
       comicError: null,
+      genres: [],
+      isLoadingGenres: false,
       homepageComics: comics,
       isLoadingHomepage: false,
       homepageError: null,
@@ -314,11 +319,19 @@ export const useStore = create<AppState>()(
         }
       },
 
-      fetchHomepageComics: async () => {
-        if (get().isLoadingHomepage) return get().homepageComics;
+      fetchHomepageComics: async (genre?: string) => {
         set({ isLoadingHomepage: true, homepageError: null });
         try {
-          const json = await fetchEncrypted("/api/v1/manga/list?type=project&page=1&page_size=24&is_update=true&sort=latest&sort_order=desc");
+          let url = "/api/v1/manga/list?page=1&page_size=24&is_update=true&sort=latest&sort_order=desc";
+          if (genre && genre !== "Semua") {
+            const formattedGenre = genre
+              .split(",")
+              .map((g) => g.trim().toLowerCase())
+              .filter(Boolean)
+              .join(",");
+            url += `&genre_include=${encodeURIComponent(formattedGenre)}&genre_include_mode=or`;
+          }
+          const json = await fetchEncrypted(url);
           if (json.retcode !== 0 || !json.data) {
             throw new Error(json.message || "Failed to fetch homepage data");
           }
@@ -356,6 +369,68 @@ export const useStore = create<AppState>()(
             isLoadingHomepage: false,
           });
           return [];
+        }
+      },
+
+      fetchGenres: async () => {
+        const CACHE_KEY = "komikverse_genre_cache";
+        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+        // 1. Check valid cache from localStorage (valid for 24 hours)
+        try {
+          const cachedRaw = localStorage.getItem(CACHE_KEY);
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw);
+            if (
+              cached &&
+              Array.isArray(cached.genres) &&
+              cached.genres.length > 0 &&
+              typeof cached.timestamp === "number" &&
+              Date.now() - cached.timestamp < ONE_DAY_MS
+            ) {
+              set({ genres: cached.genres, isLoadingGenres: false });
+              return cached.genres;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to read genre cache from localStorage:", e);
+        }
+
+        // 2. Fetch from API if no valid cache or cache expired
+        if (get().isLoadingGenres) return get().genres;
+        set({ isLoadingGenres: true });
+        try {
+          const json = await fetchEncrypted("/api/v1/genre/list");
+          if (json && json.retcode === 0 && Array.isArray(json.data)) {
+            const extracted: string[] = json.data
+              .map((item: any) => {
+                if (typeof item === "string") return item;
+                return item.name || item.title || item.genre || item.slug || "";
+              })
+              .filter(Boolean);
+
+            if (extracted.length > 0) {
+              set({ genres: extracted, isLoadingGenres: false });
+              try {
+                localStorage.setItem(
+                  CACHE_KEY,
+                  JSON.stringify({
+                    genres: extracted,
+                    timestamp: Date.now(),
+                  })
+                );
+              } catch (e) {
+                console.warn("Failed to save genre cache to localStorage:", e);
+              }
+              return extracted;
+            }
+          }
+          set({ isLoadingGenres: false });
+          return get().genres;
+        } catch (err) {
+          console.error("Error fetching genres from API:", err);
+          set({ isLoadingGenres: false });
+          return get().genres;
         }
       },
 

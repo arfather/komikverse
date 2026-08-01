@@ -5,12 +5,13 @@ import { useChapterPages } from "@/lib/hooks";
 interface VerticalReaderProps {
   comic: Comic;
   chapter: number;
+  onAllLoaded?: (allLoaded: boolean) => void;
 }
 
-export default function VerticalReader({ comic, chapter }: VerticalReaderProps) {
+export default function VerticalReader({ comic, chapter, onAllLoaded }: VerticalReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
-  const [maxLoadingIndex, setMaxLoadingIndex] = useState(0);
+  const [maxLoadedBuffer, setMaxLoadedBuffer] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [showIndicator, setShowIndicator] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,11 +20,12 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
   useEffect(() => {
     Promise.resolve().then(() => {
       setLoadedPages(new Set());
-      setMaxLoadingIndex(0);
+      setMaxLoadedBuffer(5);
       setCurrentPage(1);
       setShowIndicator(true);
+      onAllLoaded?.(false);
     });
-  }, [comic.slug, chapter]);
+  }, [comic.slug, chapter, onAllLoaded]);
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
@@ -46,9 +48,12 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Disable context menu and text selection
+  // Disable context menu except on links
   useEffect(() => {
-    const preventDefault = (e: Event) => e.preventDefault();
+    const preventDefault = (e: MouseEvent) => {
+      if ((e.target as HTMLElement)?.closest("a")) return;
+      e.preventDefault();
+    };
     document.addEventListener("contextmenu", preventDefault);
     return () => document.removeEventListener("contextmenu", preventDefault);
   }, []);
@@ -86,9 +91,14 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
     setLoadedPages((prev) => {
       const next = new Set(prev);
       next.add(index);
+      if (pages.length > 0 && next.size >= pages.length) {
+        onAllLoaded?.(true);
+      }
       return next;
     });
-  }, []);
+    // Auto-advance buffer so downloading continues automatically in background even without scrolling
+    setMaxLoadedBuffer((prev) => Math.max(prev, index + 4));
+  }, [pages.length, onAllLoaded]);
 
   return (
     <div className="min-h-screen bg-void pt-14" ref={containerRef}>
@@ -108,35 +118,35 @@ export default function VerticalReader({ comic, chapter }: VerticalReaderProps) 
 
       {/* Pages */}
       <div className="max-w-3xl mx-auto py-4 space-y-1">
-        {pages.map((pageUrl, index) => (
-          <div
-            key={index}
-            data-index={index}
-            className="relative w-full watermark-overlay"
-          >
-            {!loadedPages.has(index) && (
-              <div className="w-full aspect-[2/3] shimmer rounded-lg animate-pulse" />
-            )}
-            {index <= maxLoadingIndex && (
+        {pages.map((pageUrl, index) => {
+          const isLoaded = loadedPages.has(index);
+
+          return (
+            <div
+              key={index}
+              data-index={index}
+              className="relative w-full min-h-[200px] watermark-overlay"
+            >
+              {!isLoaded && (
+                <div className="w-full aspect-[2/3] shimmer rounded-lg animate-pulse" />
+              )}
               <img
                 src={pageUrl}
                 alt={`Halaman ${index + 1}`}
+                loading={index < 3 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={index === 0 ? "high" : "auto"}
                 className={`w-full reader-image select-none transition-opacity duration-300 ${
-                  loadedPages.has(index) ? "block opacity-100" : "hidden opacity-0"
+                  isLoaded ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 pointer-events-none"
                 }`}
-                onLoad={() => {
-                  handleImageLoad(index);
-                  setMaxLoadingIndex((prev) => Math.max(prev, index + 1));
-                }}
-                onError={() => {
-                  setMaxLoadingIndex((prev) => Math.max(prev, index + 1));
-                }}
+                onLoad={() => handleImageLoad(index)}
+                onError={() => handleImageLoad(index)}
                 draggable={false}
                 style={{ userSelect: "none" } as React.CSSProperties}
               />
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

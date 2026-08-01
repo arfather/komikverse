@@ -9,6 +9,7 @@ import {
   Moon,
   ArrowLeft,
   ArrowRight,
+  Check,
 } from "lucide-react";
 import { getComicBySlug } from "@/lib/data";
 import { sanitizeSlug, sanitizeChapterNum } from "@/lib/sanitize";
@@ -22,6 +23,7 @@ export default function ChapterReader() {
   const { slug, chapter } = useParams<{ slug: string; chapter: string }>();
   const [showSettings, setShowSettings] = useState(false);
   const [showFooter, setShowFooter] = useState(true);
+  const [isAllLoaded, setIsAllLoaded] = useState(false);
   const readerSettings = useStore((s) => s.readerSettings);
   const updateReaderSettings = useStore((s) => s.updateReaderSettings);
   const lastScrollY = useRef(0);
@@ -97,6 +99,10 @@ export default function ChapterReader() {
       updateReadingProgress(comic.id, validChapter, 100);
     }
   }, [comic, chapterExists, validChapter, markChapterAsRead, updateReadingProgress]);
+
+  useEffect(() => {
+    setIsAllLoaded(false);
+  }, [validSlug, validChapter]);
 
   if (!validSlug || Number.isNaN(validChapter)) {
     return <Navigate to="/404" replace />;
@@ -212,10 +218,10 @@ export default function ChapterReader() {
       {/* Reader Content */}
       <div className={`mx-auto ${widthClasses[readerSettings.contentWidth]}`}>
         {readerSettings.mode === "vertical" && (
-          <VerticalReader comic={comic} chapter={validChapter} />
+          <VerticalReader comic={comic} chapter={validChapter} onAllLoaded={setIsAllLoaded} />
         )}
         {(readerSettings.mode === "page" || readerSettings.mode === "dual") && (
-          <PageReader comic={comic} chapter={validChapter} />
+          <PageReader comic={comic} chapter={validChapter} onAllLoaded={setIsAllLoaded} />
         )}
       </div>
 
@@ -236,12 +242,20 @@ export default function ChapterReader() {
             <div className="w-20" />
           )}
 
-          <Link
-            to={`/comic/${comic.slug}`}
-            className="text-sm text-text-muted hover:text-warm-white transition-colors text-center"
-          >
-            Ch. {validChapter}
-          </Link>
+          <div className="flex flex-col items-center">
+            <Link
+              to={`/comic/${comic.slug}`}
+              className="text-sm text-text-muted hover:text-warm-white transition-colors text-center"
+            >
+              Ch. {validChapter}
+            </Link>
+            {isAllLoaded && (
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 mt-0.5 animate-fade-in">
+                <Check className="w-3 h-3" />
+                Completed Load
+              </span>
+            )}
+          </div>
 
           {nextChapter ? (
             <Link
@@ -282,11 +296,9 @@ export default function ChapterReader() {
                   <label className="text-sm text-text-muted mb-3 block">
                     Mode Baca
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     {[
                       { value: "vertical" as const, icon: BookOpen, label: "Scroll" },
-                      { value: "page" as const, icon: Type, label: "Halaman" },
-                      { value: "dual" as const, icon: Monitor, label: "Dual" },
                     ].map((mode) => (
                       <button
                         key={mode.value}

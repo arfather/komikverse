@@ -9,8 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowDownAZ,
-  MessageCircle,
-  ThumbsUp,
   Clock,
 } from "lucide-react";
 import { getComicBySlug, comics } from "@/lib/data";
@@ -517,67 +515,7 @@ export default function ComicDetail() {
               )}
             </section>
 
-            {/* Comments */}
-            <section>
-              <h2 className="font-display text-xl tracking-wide text-warm-white mb-4 flex items-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                KOMENTAR ({comments.length})
-              </h2>
-
-              {/* Comment Input */}
-              <div className="bg-panel rounded-xl border border-border-subtle p-4 mb-4">
-                <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-fire/20 flex items-center justify-center text-fire font-bold text-sm flex-shrink-0">
-                    KM
-                  </div>
-                  <div className="flex-1">
-                    <textarea
-                      placeholder="Tulis komentar..."
-                      className="w-full bg-void rounded-lg px-4 py-2.5 text-sm text-warm-white placeholder:text-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-fire border border-border-subtle"
-                      rows={3}
-                    />
-                    <div className="flex justify-end mt-2">
-                      <button className="px-4 py-2 bg-fire hover:bg-fire-glow text-white text-sm font-bold rounded-lg transition-colors">
-                        Kirim
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comments List */}
-              <div className="space-y-3">
-                {comments.map((comment) => (
-                  <div
-                    key={comment.id}
-                    className="bg-panel rounded-xl border border-border-subtle p-4"
-                  >
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 rounded-full bg-raised flex items-center justify-center text-text-muted font-bold text-sm flex-shrink-0">
-                        {comment.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-sm text-warm-white">
-                            {comment.user}
-                          </span>
-                          <span className="text-xs text-text-muted">
-                            {comment.time}
-                          </span>
-                        </div>
-                        <p className="text-sm text-text-muted leading-relaxed">
-                          {comment.text}
-                        </p>
-                        <button className="flex items-center gap-1 mt-2 text-xs text-text-muted hover:text-fire transition-colors">
-                          <ThumbsUp className="w-3.5 h-3.5" />
-                          {comment.likes}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {/* Comments section hidden */}
           </div>
 
           {/* Right Column - Related */}

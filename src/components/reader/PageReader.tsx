@@ -5,9 +5,10 @@ import { useChapterPages } from "@/lib/hooks";
 interface PageReaderProps {
   comic: Comic;
   chapter: number;
+  onAllLoaded?: (allLoaded: boolean) => void;
 }
 
-export default function PageReader({ comic, chapter }: PageReaderProps) {
+export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -37,16 +38,23 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
+
   useEffect(() => {
     Promise.resolve().then(() => {
       setCurrentPage(0);
       setIsLoaded(false);
+      setLoadedPages(new Set());
+      onAllLoaded?.(false);
     });
-  }, [comic.slug, chapter]);
+  }, [comic.slug, chapter, onAllLoaded]);
 
-  // Disable context menu
+  // Disable context menu except on links
   useEffect(() => {
-    const preventDefault = (e: Event) => e.preventDefault();
+    const preventDefault = (e: MouseEvent) => {
+      if ((e.target as HTMLElement)?.closest("a")) return;
+      e.preventDefault();
+    };
     document.addEventListener("contextmenu", preventDefault);
     return () => document.removeEventListener("contextmenu", preventDefault);
   }, []);
@@ -106,6 +114,17 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
     [nextPage, prevPage]
   );
 
+  const handlePageLoaded = useCallback((pageIdx: number) => {
+    setLoadedPages((prev) => {
+      const next = new Set(prev);
+      next.add(pageIdx);
+      if (pages.length > 0 && next.size >= pages.length) {
+        onAllLoaded?.(true);
+      }
+      return next;
+    });
+  }, [pages.length, onAllLoaded]);
+
   if (pages.length === 0) {
     if (isLoading) {
       return (
@@ -142,10 +161,15 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
           <img
             src={pages[currentPage]}
             alt={`Halaman ${currentPage + 1}`}
+            decoding="async"
+            fetchPriority="high"
             className={`w-full max-h-[calc(100vh-140px)] object-contain reader-image select-none rounded-lg ${
               isLoaded ? "block" : "hidden"
             }`}
-            onLoad={() => setIsLoaded(true)}
+            onLoad={() => {
+              setIsLoaded(true);
+              handlePageLoaded(currentPage);
+            }}
             draggable={false}
             style={{ userSelect: "none" } as React.CSSProperties}
           />
@@ -154,6 +178,19 @@ export default function PageReader({ comic, chapter }: PageReaderProps) {
             <img
               src={pages[currentPage + 1]}
               alt=""
+              decoding="async"
+              onLoad={() => handlePageLoaded(currentPage + 1)}
+              className="hidden w-0 h-0 absolute pointer-events-none"
+              aria-hidden="true"
+            />
+          )}
+          {/* Preload previous page in background */}
+          {currentPage > 0 && (
+            <img
+              src={pages[currentPage - 1]}
+              alt=""
+              decoding="async"
+              onLoad={() => handlePageLoaded(currentPage - 1)}
               className="hidden w-0 h-0 absolute pointer-events-none"
               aria-hidden="true"
             />

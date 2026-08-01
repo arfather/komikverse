@@ -11,6 +11,7 @@ import Browse from "@/pages/Browse";
 import { ShieldAlert } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
 import Audience from "@/pages/Audience";
+import Donation from "@/pages/Donation";
 import { trackPageView } from "@/lib/tracker";
 
 const SENSITIVE_PATH_REGEX = /(\.env|\.git|\.config|\.htaccess|wp-config|wp-admin|phpmyadmin|\.aws)/i;
@@ -78,6 +79,7 @@ export default function App() {
 
     if (!isLocalhost) {
       const handleContextMenu = (e: MouseEvent) => {
+        if ((e.target as HTMLElement)?.closest("a")) return;
         e.preventDefault();
       };
 
@@ -174,6 +176,14 @@ export default function App() {
         element={
           <Layout>
             <Audience />
+          </Layout>
+        }
+      />
+      <Route
+        path="/donation"
+        element={
+          <Layout>
+            <Donation />
           </Layout>
         }
       />

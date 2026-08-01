@@ -6,6 +6,8 @@ import {
   Minimize,
   ChevronDown,
   Bookmark,
+  Play,
+  Pause,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useStore } from "@/lib/store";
@@ -24,10 +26,50 @@ export default function ReaderToolbar({
 }: ReaderToolbarProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const animationFrameRef = useRef<number | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastScrollY = useRef(0);
   const toggleBookmark = useStore((s) => s.toggleBookmark);
   const isBookmarked = useStore((s) => s.isBookmarked(comic.id));
+
+  // Auto scroll loop with 5 speed levels
+  useEffect(() => {
+    if (!isAutoScrolling) {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      return;
+    }
+
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "auto";
+
+    const SPEED_STEPS: Record<number, number> = {
+      1: 2,
+      2: 4,
+      3: 8,
+      4: 10,
+      5: 13,
+    };
+
+    const step = SPEED_STEPS[autoScrollSpeed] || 2;
+
+    const scrollStep = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 15) {
+        setIsAutoScrolling(false);
+        return;
+      }
+      window.scrollBy({ top: step, behavior: "instant" as ScrollBehavior });
+      animationFrameRef.current = requestAnimationFrame(scrollStep);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(scrollStep);
+
+    return () => {
+      document.documentElement.style.scrollBehavior = originalScrollBehavior;
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [isAutoScrolling, autoScrollSpeed]);
 
   const resetIdleTimer = useCallback(() => {
     setIsVisible(true);
@@ -36,6 +78,12 @@ export default function ReaderToolbar({
   }, []);
 
   useEffect(() => {
+    if (isAutoScrolling) {
+      setIsVisible(true);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      return;
+    }
+
     const events = ["mousemove", "click", "touchstart"];
     events.forEach((e) => document.addEventListener(e, resetIdleTimer));
     
@@ -46,12 +94,17 @@ export default function ReaderToolbar({
       events.forEach((e) => document.removeEventListener(e, resetIdleTimer));
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [resetIdleTimer]);
+  }, [resetIdleTimer, isAutoScrolling]);
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
 
     const handleScroll = () => {
+      if (isAutoScrolling) {
+        setIsVisible(true);
+        return;
+      }
+
       const currentScrollY = window.scrollY;
 
       if (currentScrollY <= 10) {
@@ -69,7 +122,7 @@ export default function ReaderToolbar({
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [resetIdleTimer]);
+  }, [resetIdleTimer, isAutoScrolling]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -120,7 +173,40 @@ export default function ReaderToolbar({
           </div>
 
           {/* Right */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            {/* Auto Scroll Controls */}
+            <div className="flex items-center gap-1 bg-raised/90 border border-border-subtle rounded-lg p-0.5">
+              <button
+                onClick={() => setIsAutoScrolling(!isAutoScrolling)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                  isAutoScrolling
+                    ? "bg-fire text-white shadow-bloom"
+                    : "text-text-muted hover:text-warm-white hover:bg-panel"
+                }`}
+                aria-label={isAutoScrolling ? "Hentikan Auto Scroll" : "Mulai Auto Scroll"}
+                title={isAutoScrolling ? "Pause Auto Scroll" : "Mulai Auto Scroll"}
+              >
+                {isAutoScrolling ? (
+                  <Pause className="w-3.5 h-3.5 fill-current" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                )}
+                <span className="hidden sm:inline">
+                  {isAutoScrolling ? "Pause" : "Auto Scroll"}
+                </span>
+              </button>
+
+              <button
+                onClick={() =>
+                  setAutoScrollSpeed((prev) => (prev >= 5 ? 1 : ((prev + 1) as 1 | 2 | 3 | 4 | 5)))
+                }
+                className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-void text-fire border border-fire/30 hover:bg-fire/10 transition-colors"
+                title="Kecepatan Auto Scroll (1x - 5x)"
+              >
+                {autoScrollSpeed}x
+              </button>
+            </div>
+
             <button
               onClick={() => toggleBookmark(comic.id)}
               className="p-2 rounded-lg hover:bg-raised transition-colors"
