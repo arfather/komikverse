@@ -5,7 +5,6 @@ import {
   Users,
   Eye,
   TrendingUp,
-  DollarSign,
   Smartphone,
   Monitor,
   RefreshCw,
@@ -13,19 +12,15 @@ import {
   AlertCircle,
   ArrowUpRight,
   Clock,
-  Key,
   Zap,
   Database,
   FileText,
 } from "lucide-react";
 import {
   getAnalyticsSummary,
-  getAdsterraApiKey,
-  setAdsterraApiKey,
-  fetchAdsterraStats,
 } from "@/lib/tracker";
 import SEO from "@/components/SEO";
-import type { AnalyticsSummary, AdsterraStats } from "@/lib/tracker";
+import type { AnalyticsSummary } from "@/lib/tracker";
 
 // SHA-256 hash for password "guanteng"
 const TARGET_PASSWORD_HASH = "870d06159ca2d5fcd580c850239cf2e4d2bfb264ee933a2ef33d596e1b8bdf71";
@@ -48,7 +43,7 @@ export default function Audience() {
     new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
   );
 
-  // Real Analytics & Adsterra States
+  // Real Analytics States
   const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary>({
     totalVisitors: 0,
     totalPageviews: 0,
@@ -68,19 +63,6 @@ export default function Audience() {
     topPages: [],
     recentVisits: [],
   });
-  const [adsterraKeyInput, setAdsterraKeyInput] = useState<string>(getAdsterraApiKey());
-  const [adsterraStats, setAdsterraStats] = useState<AdsterraStats | null>(null);
-  const [isSavingKey, setIsSavingKey] = useState<boolean>(false);
-
-  const handleSaveAdsterraKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingKey(true);
-    setAdsterraApiKey(adsterraKeyInput);
-    setTimeout(() => {
-      loadRealStats();
-      setIsSavingKey(false);
-    }, 500);
-  };
 
   // Check existing session
   useEffect(() => {
@@ -93,14 +75,7 @@ export default function Audience() {
   const loadRealStats = useCallback(async () => {
     setIsRefreshing(true);
 
-    const savedKey = getAdsterraApiKey();
-    let stats: AdsterraStats | null = null;
-    if (savedKey) {
-      stats = await fetchAdsterraStats(savedKey);
-      if (stats) setAdsterraStats(stats);
-    }
-
-    const internalSummary = await getAnalyticsSummary(stats);
+    const internalSummary = await getAnalyticsSummary();
     setAnalyticsData(internalSummary);
 
     setTimeout(() => {
@@ -278,7 +253,7 @@ export default function Audience() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Unique Visitors */}
         <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
           <div className="flex items-center justify-between mb-3">
@@ -306,7 +281,7 @@ export default function Audience() {
         <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase text-text-muted tracking-wider">
-              Total Pageviews (Unique)
+              Total Tayangan Halaman
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
               <Eye className="w-5 h-5" />
@@ -314,30 +289,30 @@ export default function Audience() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold font-display text-warm-white">
-              {analyticsData.uniquePageviews.toLocaleString()}
+              {analyticsData.totalPageviews.toLocaleString()}
             </span>
-            <span className="text-xs font-bold text-green-400 flex items-center">
-              <ArrowUpRight className="w-3 h-3" /> Deduplicated
+            <span className="text-xs font-bold text-blue-400 flex items-center">
+              Pageviews
             </span>
           </div>
           <p className="text-[11px] text-text-muted mt-2">
-            Total Halaman Unik (Raw: {analyticsData.totalPageviews})
+            Hits halaman terverifikasi
           </p>
         </div>
 
-        {/* Page Load Speed Performance */}
+        {/* Avg Page Load Time */}
         <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase text-text-muted tracking-wider">
-              Kecepatan Performa Website
+              Waktu Muat Rata-rata
             </span>
             <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
               <Zap className="w-5 h-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-display text-warm-white">
-              {analyticsData.avgPageLoadTimeMs > 0 ? `${analyticsData.avgPageLoadTimeMs}ms` : "< 100ms"}
+            <span className="text-3xl font-bold font-display text-purple-400">
+              {analyticsData.avgPageLoadTimeMs} ms
             </span>
             <span className="text-xs font-bold text-green-400 flex items-center">
               Fast
@@ -345,29 +320,6 @@ export default function Audience() {
           </div>
           <p className="text-[11px] text-text-muted mt-2">
             Rata-rata waktu muat halaman aktual
-          </p>
-        </div>
-
-        {/* Adsterra Revenue */}
-        <div className="bg-raised/80 border border-border-subtle rounded-2xl p-5 hover:border-fire/40 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase text-text-muted tracking-wider">
-              Pendapatan Adsterra ($)
-            </span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-              <DollarSign className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-display text-amber-400">
-              ${adsterraStats ? adsterraStats.revenue.toFixed(2) : "0.00"}
-            </span>
-            <span className="text-xs font-bold text-green-400 flex items-center">
-              {adsterraStats ? `${adsterraStats.impressions} Views` : "Active"}
-            </span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-2">
-            {adsterraStats ? `eCPM: $${adsterraStats.cpm.toFixed(2)}` : "Adsterra Analytics Connected"}
           </p>
         </div>
       </div>
@@ -387,30 +339,6 @@ export default function Audience() {
             </p>
           </div>
         </div>
-
-        <form onSubmit={handleSaveAdsterraKey} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={adsterraKeyInput}
-            onChange={(e) => setAdsterraKeyInput(e.target.value)}
-            placeholder="Adsterra API Key..."
-            className="bg-raised border border-border-subtle rounded-xl px-3 py-2 text-xs text-warm-white placeholder:text-text-muted/50 focus:outline-none focus:border-fire w-56"
-          />
-          <button
-            type="submit"
-            disabled={isSavingKey}
-            className="px-3.5 py-2 rounded-xl bg-fire hover:bg-fire-glow text-white font-bold text-xs transition-all flex items-center gap-1.5"
-          >
-            {isSavingKey ? (
-              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <Key className="w-3.5 h-3.5" />
-                <span>Simpan Key</span>
-              </>
-            )}
-          </button>
-        </form>
       </div>
 
       {/* Main Charts & Top Pages */}

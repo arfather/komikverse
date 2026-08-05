@@ -26,17 +26,6 @@ export interface AnalyticsSummary {
   recentVisits: any[];
 }
 
-export interface AdsterraStats {
-  impressions: number;
-  clicks: number;
-  ctr: number;
-  cpm: number;
-  revenue: number;
-}
-
-const ADSTERRA_API_KEY_STORAGE = "kv_adsterra_api_key";
-export const DEFAULT_ADSTERRA_API_KEY = "1ec999fc3fa93978a6be4386639af46d";
-
 const sessionStartTime: number = Date.now();
 
 /**
@@ -59,7 +48,7 @@ export async function trackPageView(pathname: string): Promise<void> {
 /**
  * Get global analytics summary from Supabase database.
  */
-export async function getAnalyticsSummary(adsterraStats?: AdsterraStats | null): Promise<AnalyticsSummary> {
+export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
   const sbStats: SupabaseAnalyticsStats = await fetchSupabaseAnalyticsStats();
 
   let totalPageviews = sbStats.totalPageviews;
@@ -81,14 +70,6 @@ export async function getAnalyticsSummary(adsterraStats?: AdsterraStats | null):
     }
   }
 
-  // Prioritize real Adsterra impressions if available
-  if (adsterraStats && adsterraStats.impressions > 0) {
-    totalPageviews = Math.max(totalPageviews, adsterraStats.impressions);
-    if (uniqueVisitors === 0) {
-      uniqueVisitors = Math.round(totalPageviews * 0.7);
-    }
-  }
-
   // Active Session duration
   const elapsedSec = Math.max(15, Math.round((Date.now() - sessionStartTime) / 1000));
   const mins = Math.floor(elapsedSec / 60);
@@ -106,62 +87,4 @@ export async function getAnalyticsSummary(adsterraStats?: AdsterraStats | null):
     topPages: sbStats.topPages,
     recentVisits: sbStats.recentVisits,
   };
-}
-
-/**
- * Menyimpan Adsterra API Key ke Storage
- */
-export function setAdsterraApiKey(key: string): void {
-  try {
-    localStorage.setItem(ADSTERRA_API_KEY_STORAGE, key.trim());
-  } catch (err) {
-    console.error("Storage error:", err);
-  }
-}
-
-/**
- * Mengambil Adsterra API Key dari Storage
- */
-export function getAdsterraApiKey(): string {
-  try {
-    return localStorage.getItem(ADSTERRA_API_KEY_STORAGE) || DEFAULT_ADSTERRA_API_KEY;
-  } catch {
-    return DEFAULT_ADSTERRA_API_KEY;
-  }
-}
-
-/**
- * Fetch statistik pendapatan & impresi asli dari Adsterra API
- */
-export async function fetchAdsterraStats(apiKey?: string): Promise<AdsterraStats | null> {
-  const keyToUse = apiKey || getAdsterraApiKey();
-  if (!keyToUse) return null;
-
-  try {
-    const res = await fetch(`https://api3.adsterra.com/publisher/stats.json?api_key=${keyToUse}`);
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    
-    if (data && Array.isArray(data.items)) {
-      const totals = data.items.reduce(
-        (acc: AdsterraStats, item: any) => {
-          acc.impressions += Number(item.impressions || 0);
-          acc.clicks += Number(item.clicks || 0);
-          acc.revenue += Number(item.revenue || 0);
-          return acc;
-        },
-        { impressions: 0, clicks: 0, ctr: 0, cpm: 0, revenue: 0 }
-      );
-
-      totals.ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0;
-      totals.cpm = totals.impressions > 0 ? (totals.revenue / totals.impressions) * 1000 : 0;
-      return totals;
-    }
-    return null;
-  } catch (error) {
-    console.warn("Adsterra API fetch warning:", error);
-    return null;
-  }
 }
