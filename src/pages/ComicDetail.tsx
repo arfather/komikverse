@@ -25,7 +25,7 @@ const isNew = (date: string) => {
 };
 
 const formatChapterDate = (dateStr?: string) => {
-  if (!dateStr) return "Baru saja";
+  if (!dateStr) return "Just now";
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
 
@@ -33,11 +33,11 @@ const formatChapterDate = (dateStr?: string) => {
   const diffTime = Math.abs(now.getTime() - date.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return "Hari ini";
-  if (diffDays === 1) return "Kemarin";
-  if (diffDays < 7) return `${diffDays} hari lalu`;
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
 
-  return date.toLocaleDateString("id-ID", {
+  return date.toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
