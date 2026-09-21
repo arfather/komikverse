@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { Comic } from "@/lib/data";
 import { useChapterPages } from "@/lib/hooks";
 
@@ -11,16 +12,22 @@ interface VerticalReaderProps {
 export default function VerticalReader({ comic, chapter, onAllLoaded }: VerticalReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
+  const [failedPages, setFailedPages] = useState<Set<number>>(new Set());
+  const [retryTokens, setRetryTokens] = useState<Record<number, number>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [showIndicator, setShowIndicator] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+  const hasRestoredScroll = useRef(false);
 
   useEffect(() => {
     Promise.resolve().then(() => {
       setLoadedPages(new Set());
+      setFailedPages(new Set());
+      setRetryTokens({});
       setCurrentPage(1);
       setShowIndicator(true);
+      hasRestoredScroll.current = false;
       onAllLoaded?.(false);
     });
   }, [comic.slug, chapter, onAllLoaded]);
@@ -56,23 +63,31 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
     return () => document.removeEventListener("contextmenu", preventDefault);
   }, []);
 
-  // IntersectionObserver for page tracking
+  // IntersectionObserver for page tracking and saving position
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Page tracking observer
     const trackObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const idx = Number(entry.target.getAttribute("data-index"));
             if (!isNaN(idx)) {
-              setCurrentPage(idx + 1);
+              const pageNum = idx + 1;
+              setCurrentPage(pageNum);
+              try {
+                sessionStorage.setItem(
+                  `komikverse_read_page_${comic.slug}_${chapter}`,
+                  String(pageNum)
+                );
+              } catch {
+                // Ignore storage error
+              }
             }
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.3 }
     );
 
     const elements = containerRef.current.querySelectorAll("[data-index]");
@@ -83,7 +98,35 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
     return () => {
       trackObserver.disconnect();
     };
-  }, [pages]);
+  }, [pages, comic.slug, chapter]);
+
+  // Restore scroll position after refresh or opening chapter
+  useEffect(() => {
+    if (pages.length > 0 && !hasRestoredScroll.current && containerRef.current) {
+      try {
+        const savedPageStr = sessionStorage.getItem(
+          `komikverse_read_page_${comic.slug}_${chapter}`
+        );
+        if (savedPageStr) {
+          const savedPage = parseInt(savedPageStr, 10);
+          if (savedPage > 1 && savedPage <= pages.length) {
+            hasRestoredScroll.current = true;
+            const timer = setTimeout(() => {
+              const targetEl = containerRef.current?.querySelector(
+                `[data-index="${savedPage - 1}"]`
+              );
+              if (targetEl) {
+                targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 200);
+            return () => clearTimeout(timer);
+          }
+        }
+      } catch {
+        // Ignore storage error
+      }
+    }
+  }, [pages, comic.slug, chapter]);
 
   const handleImageLoad = useCallback((index: number) => {
     setLoadedPages((prev) => {
@@ -94,7 +137,39 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
       }
       return next;
     });
+    setFailedPages((prev) => {
+      if (!prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   }, [pages.length, onAllLoaded]);
+
+  const handleImageError = useCallback((index: number) => {
+    setFailedPages((prev) => {
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
+    setLoadedPages((prev) => {
+      if (!prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+  }, []);
+
+  const handleRetryImage = useCallback((index: number) => {
+    setFailedPages((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+    setRetryTokens((prev) => ({
+      ...prev,
+      [index]: (prev[index] || 0) + 1,
+    }));
+  }, []);
 
   return (
     <div className="min-h-screen bg-void pt-14" ref={containerRef}>
@@ -113,9 +188,14 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
       )}
 
       {/* Pages */}
-      <div className="max-w-3xl mx-auto py-4 space-y-1">
+      <div className="max-w-3xl mx-auto py-4 space-y-2">
         {pages.map((pageUrl, index) => {
           const isLoaded = loadedPages.has(index);
+          const isFailed = failedPages.has(index);
+          const retryCount = retryTokens[index] || 0;
+          const imageSrc = retryCount > 0
+            ? `${pageUrl}${pageUrl.includes("?") ? "&" : "?"}_retry=${retryCount}_${Date.now()}`
+            : pageUrl;
 
           return (
             <div
@@ -123,23 +203,50 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
               data-index={index}
               className="relative w-full min-h-[200px] watermark-overlay"
             >
-              {!isLoaded && (
+              {!isLoaded && !isFailed && (
                 <div className="w-full aspect-[2/3] shimmer rounded-lg animate-pulse" />
               )}
-              <img
-                src={pageUrl}
-                alt={`Halaman ${index + 1}`}
-                loading={index < 3 ? "eager" : "lazy"}
-                decoding="async"
-                fetchPriority={index === 0 ? "high" : "auto"}
-                className={`w-full reader-image select-none transition-opacity duration-300 ${
-                  isLoaded ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 pointer-events-none"
-                }`}
-                onLoad={() => handleImageLoad(index)}
-                onError={() => handleImageLoad(index)}
-                draggable={false}
-                style={{ userSelect: "none" } as React.CSSProperties}
-              />
+
+              {isFailed && (
+                <div className="w-full min-h-[280px] py-10 px-4 rounded-xl bg-raised/80 border border-border-subtle flex flex-col items-center justify-center gap-3 text-center shadow-lg my-2">
+                  <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-warm-white">
+                      Gagal Memuat Halaman {index + 1}
+                    </p>
+                    <p className="text-xs text-text-muted mt-1 max-w-xs">
+                      Koneksi internet bermasalah saat mengunduh gambar ini.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleRetryImage(index)}
+                    className="flex items-center gap-2 px-4 py-2 mt-2 rounded-lg bg-fire hover:bg-fire-hover text-white text-xs font-semibold shadow-lg shadow-fire/20 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Muat Ulang Halaman Ini</span>
+                  </button>
+                </div>
+              )}
+
+              {!isFailed && (
+                <img
+                  key={`${index}-${retryCount}`}
+                  src={imageSrc}
+                  alt={`Halaman ${index + 1}`}
+                  loading={index < 3 ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  className={`w-full reader-image select-none transition-opacity duration-300 ${
+                    isLoaded ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 pointer-events-none"
+                  }`}
+                  onLoad={() => handleImageLoad(index)}
+                  onError={() => handleImageError(index)}
+                  draggable={false}
+                  style={{ userSelect: "none" } as React.CSSProperties}
+                />
+              )}
             </div>
           );
         })}
