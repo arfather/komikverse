@@ -46,9 +46,8 @@ export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderPr
   useEffect(() => {
     let initialPage = 0;
     try {
-      const savedPageStr = sessionStorage.getItem(
-        `komikverse_read_page_${comic.slug}_${chapter}`
-      );
+      const key = `komikverse_read_page_${comic.slug}_${chapter}`;
+      const savedPageStr = sessionStorage.getItem(key) || localStorage.getItem(key);
       if (savedPageStr) {
         const pageNum = parseInt(savedPageStr, 10);
         if (!isNaN(pageNum) && pageNum >= 1) {
@@ -73,10 +72,9 @@ export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderPr
   useEffect(() => {
     if (pages.length > 0) {
       try {
-        sessionStorage.setItem(
-          `komikverse_read_page_${comic.slug}_${chapter}`,
-          String(currentPage + 1)
-        );
+        const key = `komikverse_read_page_${comic.slug}_${chapter}`;
+        sessionStorage.setItem(key, String(currentPage + 1));
+        localStorage.setItem(key, String(currentPage + 1));
       } catch {
         // Ignore storage error
       }

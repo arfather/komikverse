@@ -9,29 +9,113 @@ interface VerticalReaderProps {
   onAllLoaded?: (allLoaded: boolean) => void;
 }
 
+const getStorageKey = (slug: string, chapter: number) =>
+  `komikverse_read_page_${slug}_${chapter}`;
+
 export default function VerticalReader({ comic, chapter, onAllLoaded }: VerticalReaderProps) {
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
   const [failedPages, setFailedPages] = useState<Set<number>>(new Set());
   const [retryTokens, setRetryTokens] = useState<Record<number, number>>({});
-  const [currentPage, setCurrentPage] = useState(1);
+  
+  const savedPageNumber = useRef<number>(1);
+  const isRestoringRef = useRef<boolean>(false);
+  const userInteractedRef = useRef<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [showIndicator, setShowIndicator] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
-  const hasRestoredScroll = useRef(false);
 
+  // Set manual scroll restoration on browser
   useEffect(() => {
-    Promise.resolve().then(() => {
-      setLoadedPages(new Set());
-      setFailedPages(new Set());
-      setRetryTokens({});
-      setCurrentPage(1);
-      setShowIndicator(true);
-      hasRestoredScroll.current = false;
-      onAllLoaded?.(false);
-    });
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  // Listen for explicit user gestures to release auto-restoration lock
+  useEffect(() => {
+    const onUserInteraction = () => {
+      userInteractedRef.current = true;
+      isRestoringRef.current = false;
+    };
+
+    window.addEventListener("wheel", onUserInteraction, { passive: true });
+    window.addEventListener("touchmove", onUserInteraction, { passive: true });
+    window.addEventListener("keydown", onUserInteraction, { passive: true });
+    window.addEventListener("mousedown", onUserInteraction, { passive: true });
+
+    return () => {
+      window.removeEventListener("wheel", onUserInteraction);
+      window.removeEventListener("touchmove", onUserInteraction);
+      window.removeEventListener("keydown", onUserInteraction);
+      window.removeEventListener("mousedown", onUserInteraction);
+    };
+  }, []);
+
+  // Initialize saved page from storage
+  useEffect(() => {
+    let saved = 1;
+    try {
+      const key = getStorageKey(comic.slug, chapter);
+      const val = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (val) {
+        const parsed = parseInt(val, 10);
+        if (!isNaN(parsed) && parsed >= 1) {
+          saved = parsed;
+        }
+      }
+    } catch {
+      // Ignore storage error
+    }
+
+    savedPageNumber.current = saved;
+    isRestoringRef.current = saved > 1;
+    userInteractedRef.current = false;
+    setCurrentPage(saved);
+    setLoadedPages(new Set());
+    setFailedPages(new Set());
+    setRetryTokens({});
+    setShowIndicator(true);
+    onAllLoaded?.(false);
   }, [comic.slug, chapter, onAllLoaded]);
 
+  // Track active page from scroll position accurately for any image size
+  const updateActivePageFromScroll = useCallback(() => {
+    if (!containerRef.current || pages.length === 0) return;
+
+    const elements = containerRef.current.querySelectorAll<HTMLElement>("[data-index]");
+    if (elements.length === 0) return;
+
+    const viewportMid = window.innerHeight * 0.4;
+    let activeIndex = 0;
+
+    for (let i = 0; i < elements.length; i++) {
+      const el = elements[i];
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= viewportMid) {
+        activeIndex = i;
+      } else {
+        break;
+      }
+    }
+
+    const activePageNum = activeIndex + 1;
+    setCurrentPage(activePageNum);
+
+    // Save position if restoration is completed or user is actively reading/scrolling
+    if (!isRestoringRef.current || userInteractedRef.current) {
+      try {
+        const key = getStorageKey(comic.slug, chapter);
+        localStorage.setItem(key, String(activePageNum));
+        sessionStorage.setItem(key, String(activePageNum));
+      } catch {
+        // Ignore storage error
+      }
+    }
+  }, [pages.length, comic.slug, chapter]);
+
+  // Handle scroll events
   useEffect(() => {
     lastScrollY.current = window.scrollY;
 
@@ -47,11 +131,52 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
       }
 
       lastScrollY.current = currentScrollY;
+      updateActivePageFromScroll();
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [updateActivePageFromScroll]);
+
+  // Restore scroll to target page when pages are loaded
+  useEffect(() => {
+    if (pages.length === 0) return;
+
+    const targetPage = savedPageNumber.current;
+    if (targetPage > 1 && targetPage <= pages.length) {
+      const scrollToTarget = () => {
+        if (userInteractedRef.current) return;
+        const targetEl = containerRef.current?.querySelector<HTMLElement>(
+          `[data-index="${targetPage - 1}"]`
+        );
+        if (targetEl) {
+          const top = targetEl.getBoundingClientRect().top + window.scrollY - 56;
+          window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+        }
+      };
+
+      // Sequentially anchor scroll position to account for DOM insertion & reflow
+      scrollToTarget();
+      const t1 = setTimeout(scrollToTarget, 50);
+      const t2 = setTimeout(scrollToTarget, 150);
+      const t3 = setTimeout(scrollToTarget, 300);
+      const t4 = setTimeout(scrollToTarget, 600);
+      const t5 = setTimeout(() => {
+        scrollToTarget();
+        isRestoringRef.current = false;
+      }, 1200);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+        clearTimeout(t5);
+      };
+    } else {
+      isRestoringRef.current = false;
+    }
+  }, [pages.length, comic.slug, chapter]);
 
   // Disable context menu except on links
   useEffect(() => {
@@ -62,71 +187,6 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
     document.addEventListener("contextmenu", preventDefault);
     return () => document.removeEventListener("contextmenu", preventDefault);
   }, []);
-
-  // IntersectionObserver for page tracking and saving position
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const trackObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = Number(entry.target.getAttribute("data-index"));
-            if (!isNaN(idx)) {
-              const pageNum = idx + 1;
-              setCurrentPage(pageNum);
-              try {
-                sessionStorage.setItem(
-                  `komikverse_read_page_${comic.slug}_${chapter}`,
-                  String(pageNum)
-                );
-              } catch {
-                // Ignore storage error
-              }
-            }
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-
-    const elements = containerRef.current.querySelectorAll("[data-index]");
-    elements.forEach((el) => {
-      trackObserver.observe(el);
-    });
-
-    return () => {
-      trackObserver.disconnect();
-    };
-  }, [pages, comic.slug, chapter]);
-
-  // Restore scroll position after refresh or opening chapter
-  useEffect(() => {
-    if (pages.length > 0 && !hasRestoredScroll.current && containerRef.current) {
-      try {
-        const savedPageStr = sessionStorage.getItem(
-          `komikverse_read_page_${comic.slug}_${chapter}`
-        );
-        if (savedPageStr) {
-          const savedPage = parseInt(savedPageStr, 10);
-          if (savedPage > 1 && savedPage <= pages.length) {
-            hasRestoredScroll.current = true;
-            const timer = setTimeout(() => {
-              const targetEl = containerRef.current?.querySelector(
-                `[data-index="${savedPage - 1}"]`
-              );
-              if (targetEl) {
-                targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }, 200);
-            return () => clearTimeout(timer);
-          }
-        }
-      } catch {
-        // Ignore storage error
-      }
-    }
-  }, [pages, comic.slug, chapter]);
 
   const handleImageLoad = useCallback((index: number) => {
     setLoadedPages((prev) => {
@@ -143,6 +203,17 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
       next.delete(index);
       return next;
     });
+
+    // Re-anchor to target page when previous images load and expand height
+    if (isRestoringRef.current && !userInteractedRef.current && savedPageNumber.current > 1) {
+      const targetEl = containerRef.current?.querySelector<HTMLElement>(
+        `[data-index="${savedPageNumber.current - 1}"]`
+      );
+      if (targetEl) {
+        const top = targetEl.getBoundingClientRect().top + window.scrollY - 56;
+        window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+      }
+    }
   }, [pages.length, onAllLoaded]);
 
   const handleImageError = useCallback((index: number) => {

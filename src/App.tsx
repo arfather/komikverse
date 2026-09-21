@@ -21,7 +21,8 @@ function ScrollToTop() {
 
   useEffect(() => {
     trackPageView(pathname);
-    if (navType !== "POP") {
+    const isReader = /^\/comic\/[^/]+\/[^/]+$/.test(pathname);
+    if (!isReader && navType !== "POP") {
       window.scrollTo(0, 0);
     }
   }, [pathname, navType]);
