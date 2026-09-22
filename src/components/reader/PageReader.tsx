@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { Comic } from "@/lib/data";
 import { useChapterPages } from "@/lib/hooks";
@@ -10,6 +11,7 @@ interface PageReaderProps {
 }
 
 export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderProps) {
+  const location = useLocation();
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -45,17 +47,21 @@ export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderPr
   // Restore saved page position or reset
   useEffect(() => {
     let initialPage = 0;
-    try {
-      const key = `komikverse_read_page_${comic.slug}_${chapter}`;
-      const savedPageStr = sessionStorage.getItem(key) || localStorage.getItem(key);
-      if (savedPageStr) {
-        const pageNum = parseInt(savedPageStr, 10);
-        if (!isNaN(pageNum) && pageNum >= 1) {
-          initialPage = Math.min(pageNum - 1, Math.max(0, pages.length - 1));
+    const isNavigating = (location.state as { fromNav?: boolean } | null)?.fromNav;
+
+    if (!isNavigating) {
+      try {
+        const key = `komikverse_read_page_${comic.slug}_${chapter}`;
+        const savedPageStr = sessionStorage.getItem(key) || localStorage.getItem(key);
+        if (savedPageStr) {
+          const pageNum = parseInt(savedPageStr, 10);
+          if (!isNaN(pageNum) && pageNum >= 1) {
+            initialPage = Math.min(pageNum - 1, Math.max(0, pages.length - 1));
+          }
         }
+      } catch {
+        // Ignore storage error
       }
-    } catch {
-      // Ignore storage error
     }
 
     Promise.resolve().then(() => {
@@ -66,7 +72,7 @@ export default function PageReader({ comic, chapter, onAllLoaded }: PageReaderPr
       setLoadedPages(new Set());
       onAllLoaded?.(false);
     });
-  }, [comic.slug, chapter, pages.length, onAllLoaded]);
+  }, [comic.slug, chapter, location.state, pages.length, onAllLoaded]);
 
   // Save current page position
   useEffect(() => {

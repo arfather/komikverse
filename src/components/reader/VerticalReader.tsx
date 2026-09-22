@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { Comic } from "@/lib/data";
 import { useChapterPages } from "@/lib/hooks";
@@ -13,6 +14,7 @@ const getStorageKey = (slug: string, chapter: number) =>
   `komikverse_read_page_${slug}_${chapter}`;
 
 export default function VerticalReader({ comic, chapter, onAllLoaded }: VerticalReaderProps) {
+  const location = useLocation();
   const { pages, isLoading } = useChapterPages(comic, chapter);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
   const [failedPages, setFailedPages] = useState<Set<number>>(new Set());
@@ -53,21 +55,29 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
     };
   }, []);
 
-  // Initialize saved page from storage
+  // Initialize saved page from storage or start from top on chapter navigation
   useEffect(() => {
     let saved = 1;
-    try {
-      const key = getStorageKey(comic.slug, chapter);
-      const val = localStorage.getItem(key) || sessionStorage.getItem(key);
-      if (val) {
-        const parsed = parseInt(val, 10);
-        if (!isNaN(parsed) && parsed >= 1) {
-          saved = parsed;
+    const isNavigating = (location.state as { fromNav?: boolean } | null)?.fromNav;
+
+    if (!isNavigating) {
+      try {
+        const key = getStorageKey(comic.slug, chapter);
+        const val = localStorage.getItem(key) || sessionStorage.getItem(key);
+        if (val) {
+          const parsed = parseInt(val, 10);
+          if (!isNaN(parsed) && parsed >= 1) {
+            saved = parsed;
+          }
         }
+      } catch {
+        // Ignore storage error
       }
-    } catch {
-      // Ignore storage error
     }
+
+    // Always reset scroll to top immediately on chapter change
+    window.scrollTo({ top: 0, behavior: "instant" });
+    lastScrollY.current = 0;
 
     savedPageNumber.current = saved;
     isRestoringRef.current = saved > 1;
@@ -78,11 +88,12 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
     setRetryTokens({});
     setShowIndicator(true);
     onAllLoaded?.(false);
-  }, [comic.slug, chapter, onAllLoaded]);
+  }, [comic.slug, chapter, location.state, onAllLoaded]);
 
   // Track active page from scroll position accurately for any image size
   const updateActivePageFromScroll = useCallback(() => {
     if (!containerRef.current || pages.length === 0) return;
+    if (isRestoringRef.current && !userInteractedRef.current) return;
 
     const elements = containerRef.current.querySelectorAll<HTMLElement>("[data-index]");
     if (elements.length === 0) return;
@@ -103,15 +114,13 @@ export default function VerticalReader({ comic, chapter, onAllLoaded }: Vertical
     const activePageNum = activeIndex + 1;
     setCurrentPage(activePageNum);
 
-    // Save position if restoration is completed or user is actively reading/scrolling
-    if (!isRestoringRef.current || userInteractedRef.current) {
-      try {
-        const key = getStorageKey(comic.slug, chapter);
-        localStorage.setItem(key, String(activePageNum));
-        sessionStorage.setItem(key, String(activePageNum));
-      } catch {
-        // Ignore storage error
-      }
+    // Save position if user is actively reading/scrolling
+    try {
+      const key = getStorageKey(comic.slug, chapter);
+      localStorage.setItem(key, String(activePageNum));
+      sessionStorage.setItem(key, String(activePageNum));
+    } catch {
+      // Ignore storage error
     }
   }, [pages.length, comic.slug, chapter]);
 

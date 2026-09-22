@@ -99,6 +99,8 @@ export default function ChapterReader() {
   }, [comic, chapterExists, validChapter, markChapterAsRead, updateReadingProgress]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setShowFooter(true);
     setIsAllLoaded(false);
   }, [validSlug, validChapter]);
 
@@ -231,6 +233,7 @@ export default function ChapterReader() {
           {prevChapter ? (
             <Link
               to={`/comic/${comic.slug}/${prevChapter.number}`}
+              state={{ fromNav: true }}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-raised hover:bg-fire/20 text-warm-white text-sm font-semibold transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -258,6 +261,7 @@ export default function ChapterReader() {
           {nextChapter ? (
             <Link
               to={`/comic/${comic.slug}/${nextChapter.number}`}
+              state={{ fromNav: true }}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-raised hover:bg-fire/20 text-warm-white text-sm font-semibold transition-colors"
             >
               <span className="hidden sm:inline">Next</span>
