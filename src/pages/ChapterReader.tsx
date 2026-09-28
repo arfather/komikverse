@@ -56,7 +56,6 @@ export default function ChapterReader() {
 
   const loadedComics = useStore((s) => s.loadedComics);
   const fetchComic = useStore((s) => s.fetchComic);
-  const isLoading = useStore((s) => s.isLoadingComic);
 
   const comic = useMemo(() => {
     return validSlug ? (loadedComics[validSlug] || getComicBySlug(validSlug)) : undefined;
@@ -108,7 +107,7 @@ export default function ChapterReader() {
     return <Navigate to="/404" replace />;
   }
 
-  if (!hasAttemptedFetch || isLoading) {
+  if (!hasAttemptedFetch && !comic) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-void">
         <div className="text-center">

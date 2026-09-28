@@ -99,7 +99,7 @@ export default function ComicDetail() {
     return <Navigate to="/404" replace />;
   }
 
-  if (!hasAttemptedFetch || isLoading) {
+  if (!hasAttemptedFetch && !comic) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-void">
         <div className="text-center">

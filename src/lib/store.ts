@@ -230,18 +230,7 @@ export const useStore = create<AppState>()(
       },
 
       fetchComic: async (slug: string) => {
-        // 1. Check if we already have the fully loaded comic in cache and it is up to date
         const cached = get().loadedComics[slug];
-        if (
-          cached &&
-          cached.isFullyLoaded &&
-          cached.chapters &&
-          cached.chapters.length > 0 &&
-          cached.api &&
-          cached.chapters[0]?.number >= cached.latestChapter
-        ) {
-          return cached;
-        }
 
         let comic = getComicBySlug(slug);
         
@@ -282,8 +271,10 @@ export const useStore = create<AppState>()(
           return comic;
         }
 
-        // It has api configured, let's fetch it
-        set({ isLoadingComic: true, comicError: null });
+        // Only set global loading state if we don't have cached comic yet
+        if (!cached || !cached.isFullyLoaded) {
+          set({ isLoadingComic: true, comicError: null });
+        }
 
         try {
           const apiConfig = comic.api;
