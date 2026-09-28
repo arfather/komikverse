@@ -25,14 +25,27 @@ export default function Home() {
   }, [apiGenres]);
 
   const [activeGenre, setActiveGenre] = useState<string>("Semua");
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const popularScrollRef = useRef<HTMLDivElement>(null);
+  const terbaruSectionRef = useRef<HTMLDivElement>(null);
 
   const handleGenreClick = useCallback(
     (genre: string) => {
       setActiveGenre(genre);
-      fetchHomepageComics(genre);
+      setCurrentPage(1);
+      fetchHomepageComics(genre, 1);
     },
     [fetchHomepageComics]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      if (page < 1) return;
+      setCurrentPage(page);
+      fetchHomepageComics(activeGenre, page);
+      terbaruSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    [activeGenre, fetchHomepageComics]
   );
 
   const newest = homepageComics;
@@ -151,7 +164,7 @@ export default function Home() {
       </section>
 
       {/* Terbaru Diupdate */}
-      <section className="max-w-7xl mx-auto px-4 mt-10">
+      <section ref={terbaruSectionRef} className="max-w-7xl mx-auto px-4 mt-10 scroll-mt-20">
         <div className="flex items-center gap-3 mb-6">
           <Clock className="w-5 h-5 text-fire" />
           <h2 className="font-display text-2xl md:text-3xl tracking-wide text-warm-white">
@@ -162,6 +175,46 @@ export default function Home() {
           {filteredByGenre.slice(0, 24).map((comic, i) => (
             <ComicCard key={comic.id} comic={comic} index={i} />
           ))}
+        </div>
+
+        {/* Pagination Bernomor */}
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || isLoading}
+            className="p-2 rounded-lg bg-raised hover:bg-fire/20 text-text-muted hover:text-fire disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Halaman sebelumnya"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {Array.from({ length: 5 }, (_, idx) => {
+            const startPage = Math.max(1, currentPage - 2);
+            const pageNum = startPage + idx;
+            return (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                disabled={isLoading}
+                className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+                  currentPage === pageNum
+                    ? "bg-gradient-fire text-white shadow-bloom"
+                    : "bg-raised text-text-muted hover:text-warm-white hover:bg-fire/10"
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={isLoading || filteredByGenre.length < 24}
+            className="p-2 rounded-lg bg-raised hover:bg-fire/20 text-text-muted hover:text-fire disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Halaman berikutnya"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       </section>
 

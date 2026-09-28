@@ -79,7 +79,7 @@ interface AppState {
   addToast: (message: string, variant?: "success" | "info" | "warning") => void;
   removeToast: (id: string) => void;
   fetchComic: (slug: string) => Promise<Comic | null>;
-  fetchHomepageComics: (genre?: string) => Promise<Comic[]>;
+  fetchHomepageComics: (genre?: string, page?: number) => Promise<Comic[]>;
   fetchGenres: () => Promise<string[]>;
   searchComics: (query: string) => Promise<Comic[]>;
   fetchBrowseComics: (options?: FetchBrowseOptions) => Promise<Comic[]>;
@@ -327,10 +327,10 @@ export const useStore = create<AppState>()(
         }
       },
 
-      fetchHomepageComics: async (genre?: string) => {
+      fetchHomepageComics: async (genre?: string, page: number = 1) => {
         set({ isLoadingHomepage: true, homepageError: null });
         try {
-          let url = "/api/v1/manga/list?page=1&page_size=24&is_update=true&sort=latest&sort_order=desc";
+          let url = `/api/v1/manga/list?page=${page}&page_size=24&is_update=true&sort=latest&sort_order=desc`;
           if (genre && genre !== "Semua") {
             const formattedGenre = genre
               .split(",")
@@ -531,6 +531,13 @@ export const useStore = create<AppState>()(
               const existing = updatedLoaded[c.slug];
               if (!existing || !existing.isFullyLoaded) {
                 updatedLoaded[c.slug] = c;
+              } else {
+                updatedLoaded[c.slug] = {
+                  ...existing,
+                  latestChapter: Math.max(existing.latestChapter, c.latestChapter),
+                  updatedAt: c.updatedAt || existing.updatedAt,
+                  isNew: c.isNew,
+                };
               }
             });
             return {
