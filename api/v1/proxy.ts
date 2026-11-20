@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import sodium from "libsodium-wrappers";
 
 const KEY_STRING = "komikverse-super-secure-key-32ch";
-const apiTarget = process.env.VITE_API_TARGET || "https://api.shngm.io";
+const apiTarget = process.env.VITE_API_TARGET || "https://api.shinigami.io";
 
 async function encryptResponse(plaintext: string): Promise<string> {
   await sodium.ready;

@@ -278,7 +278,7 @@ export const useStore = create<AppState>()(
 
         try {
           const apiConfig = comic.api;
-          const cleanApiUrl = (url: string) => url.replace("https://api.shngm.io", "/api");
+          const cleanApiUrl = (url: string) => url.replace("https://api.shinigami.io", "/api");
           const detailUrl = apiConfig.detail?.urls?.url ? cleanApiUrl(apiConfig.detail.urls.url) : "";
           
           // Substitute {id} in chapters list URL and set page_size to 1000 to fetch all chapters

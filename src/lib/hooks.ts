@@ -247,14 +247,14 @@ export function useChapterPages(comic: Comic, chapter: number) {
       });
 
       const urlTemplate = comic.api?.chapterDetail?.urls?.url || "/api/v1/chapter/detail/{id_chapter}";
-      const cleanApiUrl = (url: string) => url.replace("https://api.shngm.io", "/api");
+      const cleanApiUrl = (url: string) => url.replace("https://api.shinigami.io", "/api");
       const fetchUrl = cleanApiUrl(urlTemplate.replace("{id_chapter}", chapterId));
 
       fetchEncrypted(fetchUrl)
         .then((json) => {
           const data: ApiChapterDetail | null = json.data ? json.data : (json.chapter_id ? json : null);
           if (data) {
-            const baseUrl = data.base_url || "https://assets.shngm.id";
+            const baseUrl = data.base_url || "https://assets.shinigami.id";
             const path = data.chapter?.path || "";
             const fileList = data.chapter?.data || [];
             const mappedPages = fileList.map((filename: string) => `${baseUrl}${path}${filename}`);

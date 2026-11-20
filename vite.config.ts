@@ -21,7 +21,7 @@ const SENSITIVE_PATH_REGEX = /(\.env|\.git|\.config|\.htaccess|wp-config|wp-admi
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const apiTarget = env.VITE_API_TARGET || "https://api.shngm.io";
+  const apiTarget = env.VITE_API_TARGET || "https://api.shinigami.io";
 
   return {
     base: '/',
