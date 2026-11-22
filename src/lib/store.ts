@@ -53,6 +53,7 @@ interface AppState {
   homepageComics: Comic[];
   isLoadingHomepage: boolean;
   homepageError: string | null;
+  homepageHasNext: boolean;
   searchResults: Comic[];
   isLoadingSearch: boolean;
   searchError: string | null;
@@ -114,6 +115,7 @@ export const useStore = create<AppState>()(
       homepageComics: comics,
       isLoadingHomepage: false,
       homepageError: null,
+      homepageHasNext: true,
       searchResults: [],
       isLoadingSearch: false,
       searchError: null,
@@ -330,7 +332,9 @@ export const useStore = create<AppState>()(
       fetchHomepageComics: async (genre?: string, page: number = 1) => {
         set({ isLoadingHomepage: true, homepageError: null });
         try {
-          let url = `/api/v1/manga/list?page=${page}&page_size=24&is_update=true&sort=latest&sort_order=desc`;
+          const limit = 24;
+          const offset = (Math.max(1, page) - 1) * limit;
+          let url = `/api/v1/manga/list?offset=${offset}&limit=${limit}&is_update=true&sort=latest&sort_order=desc`;
           if (genre && genre !== "Semua") {
             const formattedGenre = genre
               .split(",")
@@ -345,6 +349,10 @@ export const useStore = create<AppState>()(
           }
 
           const mapped = mapApiMangaListToComics(json.data);
+          const hasNext =
+            typeof json.meta?.has_next === "boolean"
+              ? json.meta.has_next
+              : mapped.length >= limit;
 
           set((state) => {
             const updatedLoaded = { ...state.loadedComics };
@@ -364,6 +372,7 @@ export const useStore = create<AppState>()(
             return {
               homepageComics: mapped,
               loadedComics: updatedLoaded,
+              homepageHasNext: hasNext,
               isLoadingHomepage: false,
             };
           });
@@ -449,7 +458,7 @@ export const useStore = create<AppState>()(
         }
         set({ isLoadingSearch: true, searchError: null });
         try {
-          const json = await fetchEncrypted(`/api/v1/manga/list?page=1&page_size=24&q=${encodeURIComponent(query)}`);
+          const json = await fetchEncrypted(`/api/v1/manga/list?offset=0&limit=24&q=${encodeURIComponent(query)}`);
           if (json.retcode !== 0 || !json.data) {
             throw new Error(json.message || "Failed to parse search results");
           }
@@ -494,9 +503,10 @@ export const useStore = create<AppState>()(
       fetchBrowseComics: async (options: FetchBrowseOptions = {}) => {
         set({ isLoadingBrowse: true, browseError: null });
         try {
-          const page = options.page || 1;
-          const pageSize = options.pageSize || 36;
-          let url = `/api/v1/manga/list?page=${page}&page_size=${pageSize}`;
+          const page = Math.max(1, options.page || 1);
+          const limit = options.pageSize || 36;
+          const offset = (page - 1) * limit;
+          let url = `/api/v1/manga/list?offset=${offset}&limit=${limit}`;
 
           if (options.search?.trim()) {
             url += `&q=${encodeURIComponent(options.search.trim())}`;

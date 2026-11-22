@@ -12,6 +12,7 @@ export default function Home() {
   const homepageComics = useStore((s) => s.homepageComics);
   const fetchHomepageComics = useStore((s) => s.fetchHomepageComics);
   const isLoading = useStore((s) => s.isLoadingHomepage);
+  const homepageHasNext = useStore((s) => s.homepageHasNext);
   const apiGenres = useStore((s) => s.genres);
   const fetchGenres = useStore((s) => s.fetchGenres);
 
@@ -209,7 +210,7 @@ export default function Home() {
 
           <button
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={isLoading || filteredByGenre.length < 24}
+            disabled={isLoading || !homepageHasNext}
             className="p-2 rounded-lg bg-raised hover:bg-fire/20 text-text-muted hover:text-fire disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Halaman berikutnya"
           >
